@@ -1,0 +1,22 @@
+{
+  "network": "testnet",
+  "status": "not-deployed",
+  "note": "Account ids are derived from ROOT_ACCOUNT. scripts/setup-testnet.ts overwrites this file with real tx hashes after the approved testnet run.",
+  "rpcUrl": "https://test.rpc.fastnear.com",
+  "fallbackRpcUrls": ["https://near-testnet.drpc.org"],
+  "hub": "hub.hivefund-2026.testnet",
+  "token": "hive.hivefund-2026.testnet",
+  "owner": "hivefund-2026.testnet",
+  "coordinator": "coordinator.hivefund-2026.testnet",
+  "verifier": "verifier.hivefund-2026.testnet",
+  "workers": {
+    "cheap": "cheap.hivefund-2026.testnet",
+    "quality": "quality.hivefund-2026.testnet",
+    "adaptive": "adaptive.hivefund-2026.testnet",
+    "forger": "forger.hivefund-2026.testnet"
+  },
+  "explorer": "https://testnet.nearblocks.io",
+  "deployedAt": "",
+  "txs": {},
+  "sampleTxs": { "deploy": "", "verifyPass": "" }
+}
