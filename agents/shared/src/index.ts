@@ -3,4 +3,5 @@ export * from "./types.ts";
 export * from "./canonical.ts";
 export * from "./bid.ts";
 export * from "./mint.ts";
-// Stream B adds: spec.ts (BountySpec/Deliverable/VerificationReport validators), config.ts (deployment JSON + env).
+export * from "./spec.ts";
+export * from "./selection.ts";
