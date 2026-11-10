@@ -15,7 +15,12 @@
   ],
   "scripts": {
     "demo": "tsx agents/coordinator/src/demo.ts",
+    "demo:mock": "tsx agents/coordinator/src/demo.ts --mode mock",
+    "agent": "tsx agents/coordinator/src/loop.ts",
+    "sample": "tsx agents/coordinator/src/sample.ts",
     "test": "npm -w tests test",
+    "test:testnet": "npm -w tests run test:testnet",
+    "typecheck:b": "tsc --noEmit -p agents/shared && tsc --noEmit -p agents/coordinator && tsc --noEmit -p tests",
     "setup:testnet": "tsx scripts/setup-testnet.ts",
     "web": "npm -w web run dev",
     "typecheck:shared": "tsc --noEmit -p agents/shared"

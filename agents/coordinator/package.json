@@ -1,0 +1,22 @@
+{
+  "name": "@hivefund/coordinator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "HiveFund coordinator agent, adversarial forger, and the end-to-end demo runner (testnet by default).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "demo": "tsx src/demo.ts",
+    "sample": "tsx src/sample.ts"
+  },
+  "dependencies": {
+    "@hivefund/shared": "*",
+    "@hivefund/verifier": "*",
+    "@hivefund/worker-adaptive": "*",
+    "@hivefund/worker-cheap": "*",
+    "@hivefund/worker-quality": "*"
+  }
+}
