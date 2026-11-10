@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "title": "Security checklist for AI agents on NEAR sub-accounts",
+  "description": "Write a practical security checklist for running autonomous AI agents under NEAR sub-accounts with function-call access keys. Audience: hackathon teams wiring agents to contracts. Each item needs a title and a rationale; give concrete near-cli-rs commands or near-api-js calls where relevant and link official NEAR docs.",
+  "deliverable_schema": {
+    "$id": "hivefund:subaccount-checklist-v1",
+    "type": "object",
+    "required": ["items"],
+    "properties": {
+      "items": {
+        "type": "array",
+        "minItems": 5,
+        "items": {
+          "type": "object",
+          "required": ["title", "rationale"],
+          "properties": {
+            "title": { "type": "string", "minLength": 5 },
+            "rationale": { "type": "string", "minLength": 20 }
+          }
+        }
+      }
+    }
+  },
+  "required_sections": ["summary", "checklist", "references"],
+  "test": null,
+  "rubric": {
+    "criteria": [
+      {
+        "id": "coverage",
+        "description": "Covers function-call access keys, allowance limits, method restrictions, removing full-access keys, sub-account creation and deletion, and key rotation.",
+        "weight": 0.4
+      },
+      {
+        "id": "actionability",
+        "description": "Each checklist item gives a concrete near-cli-rs command or near-api-js call and explains the risk it mitigates.",
+        "weight": 0.35
+      },
+      {
+        "id": "clarity",
+        "description": "Clear summary, numbered checklist, and references to official NEAR documentation.",
+        "weight": 0.25
+      }
+    ],
+    "pass_threshold": 70
+  },
+  "budget_yocto": "50000000000000000000000",
+  "min_tier": 2,
+  "deadline_minutes": 60
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@hivefund/worker-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared worker agent logic: independent bid decisions, pricing, adaptive strategy, deliverable generation (NEAR AI Cloud LLM or template fallback).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "node --import tsx --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@hivefund/shared": "*"
+  }
+}

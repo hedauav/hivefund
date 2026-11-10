@@ -1,0 +1,19 @@
+{
+  "name": "@hivefund/verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "HiveFund verifier agent: schema + sections -> executable acceptance test -> NEAR AI rubric; records the report hash on-chain via verify_bounty.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "node --import tsx --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@hivefund/shared": "*",
+    "@hivefund/worker-core": "*",
+    "ajv": "^8.17.1"
+  }
+}
