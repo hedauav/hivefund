@@ -142,7 +142,7 @@ Deployed 2026-11-10. All 18 self-checks passed (see `selfCheck` in [`config/depl
 Parameters:
 - spend cap 1 NEAR, treasury funded with 0.5 NEAR ([tx](https://testnet.nearblocks.io/txns/9VtuvA17sKd65g94p1SZyx54SKKG42FtdkBTFhi3wt2T));
 - `mint_rate` 1e16;
-- 0.1 NEAR per agent, function-call key allowance 0.05 NEAR.
+- 0.1 NEAR per agent; function-call key allowance 0.05 NEAR at deploy, re-issued at 0.1 NEAR for every agent after the first run (see below).
 
 Budgets are the minimum for testnet and can be raised with `scripts/topup.ts`.
 
@@ -158,6 +158,7 @@ Budgets are the minimum for testnet and can be raised with `scripts/topup.ts`.
 | Second failure → bounty cancelled, 0.1 NEAR refunded to the treasury (bounty #0, round 1) | <!-- TX:verifyFailCancelRefund --> [2ehkaS2X…](https://testnet.nearblocks.io/txns/2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW) |
 | Pass after a reopen (bounty #2, testnet e2e run) | <!-- TX:verifyPassAfterReopen --> [GrmRTiub…](https://testnet.nearblocks.io/txns/GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r) |
 | Coordinator and verifier keys re-issued with a 0.1 NEAR allowance (`scripts/topup.ts rekey`) | [DzcrzPtj…](https://testnet.nearblocks.io/txns/DzcrzPtjj9Eq9fZjZfWypYaSX3VomLmyFG5XXE5JMEYf) · [2qWf4DJi…](https://testnet.nearblocks.io/txns/2qWf4DJiBSgWMfaWZ3M53xyDdjM3XCEPhF4k6jFz6EeM) |
+| Worker keys (cheap, quality, adaptive, forger) re-issued with a 0.1 NEAR allowance | [JAnKs1WV…](https://testnet.nearblocks.io/txns/JAnKs1WVVNVXSoxGsxpso8cboPGUFnvDm3f95wnXU7g2) · [AtuXqmSx…](https://testnet.nearblocks.io/txns/AtuXqmSxvN2mU6KTNsMmxYWA6evPcKTh6xfVR5J2hNuy) · [9BypHhbi…](https://testnet.nearblocks.io/txns/9BypHhbiBwaF6FatwoAUXLVwq9AWzregZT3KqTZbu6ur) · [6d7jooPS…](https://testnet.nearblocks.io/txns/6d7jooPSgZeLCaRa1oDugQ1PkuVwWkshaKSX6jioe4t) |
 
 ### What happened in the recorded testnet run
 
@@ -194,7 +195,7 @@ The off-chain records of these runs (specs, deliverables, verification reports, 
 ## NEAR features used
 
 - **Sub-accounts:** one per agent (`coordinator.`, `verifier.`, `cheap.`, `quality.`, `adaptive.`, `forger.`) plus one per contract (`hub.`, `hive.`) under `hivefund-2026.testnet`.
-- **Function-call access keys:** each agent key is scoped to `hub.hivefund-2026.testnet` with a method list and a 0.05 NEAR allowance:
+- **Function-call access keys:** each agent key is scoped to `hub.hivefund-2026.testnet` with a method list and a NEAR allowance (0.05 at deploy, now 0.1):
 
   | Agent | Allowed methods |
   |---|---|
@@ -244,7 +245,7 @@ NEAR Intents and Chain Signatures are not used.
 - **No Sputnik DAO treasury,** so the Social Money track is not claimed.
 - **LLM output is nondeterministic.** The same bounty can produce different deliverables and rubric scores across runs. Reports record the model used and whether the rubric ran in `llm` or `fallback` mode.
 - **Fallback rubric.** If NEAR AI is unavailable, the verifier uses a deterministic keyword-coverage heuristic (see `docs/MECHANICS.md`). The report says so, but the heuristic is much weaker than an LLM review.
-- **Small budgets.** Function-call key allowances are 0.05 NEAR, and long runs need `scripts/topup.ts rekey`. The hub pays for its own storage from a 0.2 NEAR buffer.
+- **Small budgets and allowance headroom.** Before running a function-call-key transaction, NEAR checks the key's allowance against a *pessimistic* cost of the attached gas (about 0.031 NEAR for a 30 TGas call), not the much smaller fee actually burned (about 0.0003 NEAR). A key whose remaining allowance drops below that is refused with "Not enough allowance" even though it has spent very little. This happened to two worker bids in the testnet e2e run when the worker keys had about 0.048 NEAR left. All agent keys now carry 0.1 NEAR. When a key runs low, issue a fresh one with `npx tsx scripts/topup.ts rekey <agent> 0.1` (check with `npx tsx scripts/topup.ts status`). An allowance can't be raised in place, so rekeying uses the root recovery key. The hub pays for its own storage from a 0.2 NEAR buffer.
 - **Hosted dashboard limits.** On a host without the local `data/` folder, the dashboard needs the committed export of the recorded run in `data/testnet-run/`.
 
 ## License
