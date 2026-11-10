@@ -13,5 +13,5 @@ spend cap 1 NEAR).
 
 Test commands: only `runner: "node"` is allowed and `file` must resolve inside this folder. The verifier writes the
 deliverable's `code` files into a fresh temp dir and runs `node <file> <tempdir>` without a shell, with a timeout.
-`deliverable_schema.$id` (e.g. `hivefund:slugify-v1`) tells workers which built-in fallback template applies when no
+`deliverable_schema.$id` (e.g. `hivefund:slugify-v2`) tells workers which built-in fallback template applies when no
 LLM key is configured.

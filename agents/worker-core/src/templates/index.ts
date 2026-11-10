@@ -10,7 +10,7 @@ export interface TemplateOutput {
 
 /** Built-in fallback generators keyed by the spec's deliverable_schema.$id. */
 export const TEMPLATES: Record<string, (q: Quality) => TemplateOutput> = {
-  "hivefund:slugify-v1": slugifyTemplate,
+  "hivefund:slugify-v2": slugifyTemplate,
   "hivefund:subaccount-checklist-v1": checklistTemplate,
 };
 

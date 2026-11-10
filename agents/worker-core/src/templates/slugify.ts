@@ -1,4 +1,4 @@
-// Fallback (no-LLM) generator for the "hivefund:slugify-v1" bounty. Each quality level is a real,
+// Fallback (no-LLM) generator for the "hivefund:slugify-v2" bounty. Each quality level is a real,
 // different implementation; the example outputs are produced by actually running that implementation,
 // so a sloppy worker's deliverable honestly shows its own wrong outputs and fails the acceptance test.
 import type { Quality } from "../pricing.ts";
@@ -16,17 +16,33 @@ const IMPL: Record<Quality, string> = {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }`,
-  // Transliterates sharp s, NFKD-decomposes, strips combining marks, collapses separators.
-  high: `function slugify(input) {
+  // Full spec: transliteration table, NFKD + mark stripping, apostrophes, options, word-boundary truncation.
+  high: `const TRANSLIT = { "\u00df": "ss", "\u1e9e": "ss", "\u00e6": "ae", "\u00c6": "ae", "\u00f8": "o", "\u00d8": "o", "\u0153": "oe", "\u0152": "oe", "\u0111": "d", "\u0110": "d", "\u0142": "l", "\u0141": "l", "\u00fe": "th", "\u00de": "th", "\u00f0": "d", "\u00d0": "d" };
+const SEPARATORS = new Set(["-", "_", "."]);
+function slugify(input, options = {}) {
   if (typeof input !== "string") throw new TypeError("slugify expects a string");
-  return input
-    .replace(/\\u00df/g, "ss")
-    .replace(/\\u1e9e/g, "SS")
+  const separator = options.separator ?? "-";
+  const maxLength = options.maxLength ?? Infinity;
+  if (!SEPARATORS.has(separator)) throw new RangeError("separator must be one of - _ .");
+  if (maxLength !== Infinity && (!Number.isInteger(maxLength) || maxLength < 1)) throw new RangeError("maxLength must be a positive integer");
+  const words = input
+    .replace(/[\u00df\u1e9e\u00e6\u00c6\u00f8\u00d8\u0153\u0152\u0111\u0110\u0142\u0141\u00fe\u00de\u00f0\u00d0]/g, (c) => TRANSLIT[c])
     .normalize("NFKD")
-    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/['\u2019]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  let out = "";
+  for (const w of words) {
+    const next = out ? out + separator + w : w;
+    if (next.length > maxLength) {
+      if (!out) out = w.slice(0, maxLength);
+      break;
+    }
+    out = next;
+  }
+  return out;
 }`,
 };
 
@@ -43,13 +59,13 @@ const SECTIONS: Record<Quality, { approach: string; edge_cases: string }> = {
   },
   high: {
     approach:
-      "1) Transliterate the german sharp s (ß -> ss) since it has no unicode decomposition. 2) Apply unicode NFKD decomposition so accented letters split into base letter + combining mark. 3) Diacritic stripping: remove combining marks (U+0300-U+036F). 4) Lowercase conversion. 5) Collapse every run of non [a-z0-9] characters into a single hyphen separator and trim hyphens at both ends.",
+      "1) Transliterate letters NFKD cannot decompose using a fixed table (ß/ẞ -> ss, æ -> ae, ø -> o, œ -> oe, đ/ð -> d, ł -> l, þ -> th) before normalizing. 2) Apply unicode NFKD decomposition, which also expands compatibility forms (ligature ﬁ -> fi, Ⅻ -> XII, ① -> 1). 3) Diacritic stripping: remove combining marks U+0300-U+036F. 4) Remove apostrophes (' and ’) without a separator. 5) Lowercase conversion. 6) Split into words on every run of characters outside [a-z0-9] and join with the separator option (default '-'), so separators never repeat or lead/trail. 7) maxLength: add whole words while they fit; if the first word alone is too long, cut it to maxLength.",
     edge_cases:
-      "Empty input returns an empty string; input of only separators (---) returns empty; repeated separators (a--b__c) collapse to one hyphen; leading or trailing punctuation is trimmed; german sharp s becomes ss; diacritics are stripped (Crème -> creme); non-latin characters such as 東京 are dropped; digits and dots (v2.0) become v2-0; non-string input throws TypeError.",
+      "Empty or whitespace-only input returns an empty string; separator-only input (---) returns empty; repeated separators (a--b__c) collapse; leading or trailing punctuation is trimmed; german sharp s (both cases) becomes ss; diacritics are stripped (Crème -> creme); ligatures, roman numerals and circled digits are expanded by NFKD; non-latin characters such as 東京 are dropped; apostrophes join words (Don't -> dont); a first word longer than maxLength is hard-cut; output never ends with a separator; the function is idempotent for the same options; non-string input throws TypeError and an invalid separator or maxLength throws RangeError.",
   },
 };
 
-const EXAMPLE_INPUTS = ["Hello World", "Héllo Wörld", "  Multiple   spaces  ", "Straße", "Rust & NEAR!"];
+const EXAMPLE_INPUTS = ["Hello World", "Héllo Wörld", "  Multiple   spaces  ", "Straße", "Rust & NEAR!", "Don't Stop Me Now", "Æsir Œuvre"];
 
 export function slugifyTemplate(quality: Quality): TemplateOutput {
   const src = IMPL[quality];

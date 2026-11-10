@@ -1,40 +1,62 @@
 {
   "version": 1,
-  "title": "Unicode-safe slugify() for HiveFund URLs",
-  "description": "Implement an ES module slugify.mjs exporting slugify(input: string): string. It must turn arbitrary titles into URL slugs: lowercase ASCII letters and digits separated by single hyphens, no leading or trailing hyphens. Latin diacritics must be transliterated (é -> e, ß -> ss), other non-ASCII characters dropped. The automated test in bounties/tests/slugify.test.mjs is the acceptance gate.",
+  "title": "Production-grade slugify() with options for HiveFund URLs",
+  "description": "Implement an ES module slugify.mjs exporting slugify(input: string, options?: { separator?: \"-\" | \"_\" | \".\"; maxLength?: number }): string. Rules, applied in this order: (1) Transliterate before normalizing: ß and ẞ -> ss, æ/Æ -> ae, ø/Ø -> o, œ/Œ -> oe, đ/Đ -> d, ł/Ł -> l, þ/Þ -> th, ð/Ð -> d. (2) Apply Unicode NFKD normalization (so compatibility forms decompose: ﬁ -> fi, Ⅻ -> XII, ① -> 1) and remove combining marks U+0300-U+036F. (3) Remove apostrophes (' and ’) without inserting a separator (Don't -> dont). (4) Lowercase. (5) Every run of characters outside [a-z0-9] (spaces, punctuation, existing separators, any remaining non-ASCII such as CJK) is a word boundary; words are the non-empty runs of [a-z0-9]. (6) Join words with options.separator (default \"-\"); never emit leading, trailing or repeated separators. (7) options.maxLength (positive integer, default unlimited): if the slug is longer, keep the longest prefix made of whole words that fits; if even the first word is longer than maxLength, return that word cut to maxLength characters. Never end with a separator. (8) Empty or whitespace/punctuation-only input returns \"\". (9) Idempotent: slugify(slugify(x, o), o) === slugify(x, o). (10) Throw TypeError when input is not a string; throw RangeError when separator is not one of - _ . or maxLength is not a positive integer. The automated test bounties/tests/slugify.test.mjs is the acceptance gate.",
   "deliverable_schema": {
-    "$id": "hivefund:slugify-v1",
+    "$id": "hivefund:slugify-v2",
     "type": "object",
-    "required": ["function_name", "file", "examples"],
+    "required": [
+      "function_name",
+      "file",
+      "examples"
+    ],
     "properties": {
-      "function_name": { "const": "slugify" },
-      "file": { "const": "slugify.mjs" },
+      "function_name": {
+        "const": "slugify"
+      },
+      "file": {
+        "const": "slugify.mjs"
+      },
       "examples": {
         "type": "array",
         "minItems": 3,
         "items": {
           "type": "object",
-          "required": ["input", "output"],
+          "required": [
+            "input",
+            "output"
+          ],
           "properties": {
-            "input": { "type": "string" },
-            "output": { "type": "string" }
+            "input": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            }
           }
         }
       }
     }
   },
-  "required_sections": ["approach", "edge_cases"],
-  "test": { "runner": "node", "file": "tests/slugify.test.mjs", "timeout_ms": 10000 },
+  "required_sections": [
+    "approach",
+    "edge_cases"
+  ],
+  "test": {
+    "runner": "node",
+    "file": "tests/slugify.test.mjs",
+    "timeout_ms": 10000
+  },
   "rubric": {
     "criteria": [
       {
         "id": "approach",
-        "description": "Explains the normalization approach: unicode decomposition (NFKD), diacritic stripping, lowercase conversion, and collapsing separators into single hyphens.",
+        "description": "Explains the pipeline in order: transliteration table before NFKD, NFKD + combining-mark removal, apostrophe removal, lowercasing, word splitting on non [a-z0-9], joining with the separator, and word-boundary truncation for maxLength.",
         "weight": 0.6
       },
       {
         "id": "edge_cases",
-        "description": "Documents edge cases: empty input, repeated separators, leading or trailing punctuation, german sharp s, and non-latin characters.",
+        "description": "Documents edge cases: empty/whitespace-only input, repeated or leading/trailing separators, sharp s and other transliterations, compatibility characters (ligatures, roman numerals, circled digits), non-latin scripts, apostrophes, first word longer than maxLength, idempotency, and invalid options/non-string input errors.",
         "weight": 0.4
       }
     ],

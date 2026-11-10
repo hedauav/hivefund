@@ -197,7 +197,7 @@ describe("adaptive strategy", () => {
 });
 
 describe("deliverable generation", () => {
-  it("falls back to the template when the LLM fails, and records why", async () => {
+  it("submits an honest failed deliverable (not template code) when the configured LLM fails", async () => {
     const spec = loadSpec("slugify.json");
     const llm = {
       model: "test-model",
@@ -206,7 +206,10 @@ describe("deliverable generation", () => {
       },
     };
     const g = await generateDeliverable(spec, { bountyId: 1, round: 0, worker: "w.test", quality: "high", llm });
-    assert.equal(g.mode, "template");
+    assert.equal(g.mode, "failed");
+    assert.equal(g.deliverable.generator.mode, "failed");
+    assert.equal(g.deliverable.generator.model, "test-model");
+    assert.equal(g.deliverable.code, undefined);
     assert.match(g.note!, /HTTP 503/);
   });
 

@@ -1,6 +1,7 @@
 // Deliverable generation. With an LLM (NEAR AI Cloud) the worker really writes the deliverable; how much
 // effort it spends depends on its quality level (token budget, whether it reads the acceptance test,
-// instructions). Without an LLM it falls back to the built-in template for the spec's schema $id.
+// instructions). If the LLM fails, the worker submits an honest failed deliverable (never canned code).
+// Only when no LLM is configured at all (simulation mode) does it use the built-in template for the spec's $id.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,7 +82,15 @@ export async function generateDeliverable(spec: BountySpec, ctx: GenerateContext
         errors.push((e as Error).message);
       }
     }
-    note = `LLM generation failed (${LLM_ATTEMPTS} attempts): ${errors.join("; ")}`;
+    // An LLM was configured and the worker could not produce valid work with it. Submitting canned template
+    // code here would misrepresent the worker's output, so it hands in an honest failed deliverable instead
+    // (it fails verification and the bounty reopens). Templates are only used in no-LLM simulation mode.
+    return {
+      deliverable: { ...base, sections: {}, data: null, generator: { mode: "failed", model: ctx.llm.model } },
+      mode: "failed",
+      model: ctx.llm.model,
+      note: `LLM generation failed (${LLM_ATTEMPTS} attempts): ${errors.join("; ")}`,
+    };
   } else {
     note = "no NEARAI_API_KEY configured";
   }
