@@ -37,12 +37,12 @@ export interface GenerateResult {
 /** Effort per quality level: genuine differences in budget and in what the worker reads. */
 export const EFFORT: Record<Quality, { maxTokens: number; readsTest: boolean; style: string }> = {
   low: {
-    maxTokens: 900,
+    maxTokens: 2800,
     readsTest: false,
     style: "You are a budget freelancer. Work fast: skim the spec, keep everything short, do not over-think edge cases.",
   },
   medium: {
-    maxTokens: 2500,
+    maxTokens: 3500,
     readsTest: false,
     style: "You are a competent freelancer. Meet the stated requirements with reasonable care.",
   },

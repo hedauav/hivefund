@@ -37,8 +37,8 @@ compile and test without Stream B's code. Stream B's `NearHubClient`, `MockHubCl
 
   | Worker | Model (env override) | Token budget | Reads the acceptance test? |
   |---|---|---|---|
-  | cheap | `z-ai/glm-5.3-flash` (`WORKER_CHEAP_MODEL`) | 900 | no |
-  | adaptive | `NEARAI_MODEL` (flash) (`WORKER_ADAPTIVE_MODEL`) | 2500 | no |
+  | cheap | `z-ai/glm-5.3-flash` (`WORKER_CHEAP_MODEL`) | 2800 | no |
+  | adaptive | `NEARAI_MODEL` (flash) (`WORKER_ADAPTIVE_MODEL`) | 3500 | no |
   | quality | `deepseek/deepseek-v3.2` (`WORKER_QUALITY_MODEL`) | 6000 | yes, full source |
 
 - `z-ai/glm-5.3` was tried for the quality worker and rejected. Under `json_schema` it returned placeholder
