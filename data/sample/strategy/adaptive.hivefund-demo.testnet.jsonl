@@ -1,0 +1,3 @@
+{"ts_ms":1794484920000,"worker":"adaptive.hivefund-demo.testnet","bounty_id":0,"old_margin":0.2,"new_margin":0.25,"reason":"won bounty #0 (last 1: 1W/0L/0F): raising margin +0.05 to capture more value","window":["win"]}
+{"ts_ms":1794484920000,"worker":"adaptive.hivefund-demo.testnet","bounty_id":1,"old_margin":0.25,"new_margin":0.21,"reason":"lost bounty #1 to a better-scored bid (last 2: 1W/1L/0F): lowering margin -0.04","window":["win","loss"]}
+{"ts_ms":1794485040000,"worker":"adaptive.hivefund-demo.testnet","bounty_id":0,"old_margin":0.21,"new_margin":0.21,"reason":"deliverable for bounty #0 failed verification (last 3: 1W/1L/1F): raising quality medium -> high","window":["win","loss","fail"]}
