@@ -35,24 +35,29 @@ interface HubClient {
 }
 ```
 - A failed call **throws an `Error` whose message contains the contract's `ERR_*` code**. Match it with `err.message.includes("ERR_NOT_WORKER")`; `hubErrorCode(err)` returns the code.
-- **`NearHubClient`**: `new NearHubClient({ accountId, privateKey, contractId, rpcUrl? })`. Uses near-api-js 7.4 with a function-call key. Default gas is 100 TGas. `txHash` = `transaction_outcome.id`.
-- **`MockChain`**: an in-memory port of the bounty-hub and hive-token contracts, with the same method names, args, `ERR_*` strings, non-panicking bid rejections, treasury math, mint math, activity log and supply history.
+- **`NearHubClient`** (the main path, testnet): `new NearHubClient({ accountId, privateKey, contractId, rpcUrl?, fallbackRpcUrls?, explorer?, onTx?, retries? })`.
+  - Uses near-api-js 7.4 with the agent's function-call key; default gas 100 TGas; `txHash` = `transaction_outcome.id`.
+  - RPC failover: fastnear → drpc. Transient errors (network, 429/5xx, nonce, expiry) are retried with backoff, and calls are serialized per key.
+  - Contract panics are never retried.
+  - `onTx` receives a `TxLogEntry` that includes a nearblocks link.
+- **`MockChain`** (unit tests and offline dev only): an in-memory port of bounty-hub + hive-token. It has the same method names, args and `ERR_*` strings, the same non-panicking bid rejections, and the same treasury math, mint math, activity log and supply history.
   ```ts
-  const chain = new MockChain({ owner: "owner.test", hub: "hub.test", token: "hive.test",
-                                spendCapYocto: "1000000000000000000000000", mintRate: "10000000000000000" });
-  const hub = chain.client("coordinator.test");          // HubClient on the hub as that account
-  const tok = chain.tokenClient("anyone.test");          // HubClient on the token (ft_balance_of, ft_total_supply, ft_metadata)
-  chain.setNow(ms) / chain.advance(ms)                   // controllable clock (default Date.now at construction)
-  chain.nearBalance(account)                             // NEAR received from payouts (bigint)
-  chain.snapshot()                                       // every view as one JSON object (used for data/sample)
+  const chain = new MockChain({ owner, hub, token, spendCapYocto, mintRate, nowMs? });
+  chain.client(accountId, onTx?)        // HubClient on the hub as that account
+  chain.tokenClient(accountId)          // HubClient on the token (ft_balance_of, ft_total_supply, ft_metadata, mint -> ERR_NOT_MINTER)
+  chain.setNow(ms) / chain.advance(ms)  // controllable clock
+  chain.nearBalance(account)            // NEAR received from payouts (bigint)
+  chain.failNextMints = 1               // simulate a failed mint callback (-> MintFailed, retry_mint)
   ```
-  The mock tx hashes are deterministic, base58-looking strings (`mock-<n>`).
-- **`createDemoMarket(opts?)`** (mock) sets up a `MockChain` the same way as `scripts/setup-testnet.ts`:
-  - roles are set;
-  - workers are registered (cheap 1, adaptive 2, quality 3, forger 1), each with a fresh bid key;
-  - the treasury is funded with 0.5 NEAR against a 1 NEAR spend cap.
-
-  It returns `{ chain, accounts, bidKeys, clients }`.
+  Mock tx hashes are `mock-<n>`. Any failed call rolls back the whole state, like a failed NEAR tx.
+- **Markets**: wired agent contexts for the whole swarm.
+  - **`createTestnetMarket()`** (main path) reads `config/deployment.testnet.json`, plus the agent keys and bid keys from `.env.local`. Every tx goes to `data/tx.jsonl`.
+  - **`createMockMarket({ store })`** sets up a MockChain the same way the setup script does on testnet:
+    - roles are set;
+    - workers are registered (cheap 1, adaptive 2, quality 3, forger 1);
+    - the treasury is funded with 0.5 NEAR against a 1 NEAR cap.
+  - Both return a `Market` with `{ mode, hubId, tokenId, store, coordinator, verifier, workers{cheap,quality,adaptive}, forger, owner, token, chain, now }`.
+- **`readChainState(hub, token, source)`** returns every view as one JSON object, which becomes `chain-state.json`.
 
 ### Off-chain store
 
@@ -61,54 +66,41 @@ const store = new OffchainStore(dataDir);  // default: openStore() -> $HIVEFUND_
 store.put(obj, { kind: "spec" | "deliverable" | "report" | "selection", bounty_id?, round?, actor }): string  // -> hash
 store.get<T>(hash): T            // re-hashes, throws on mismatch / missing
 store.has(hash): boolean
-store.appendStrategy(worker, change: StrategyChange)  /  store.readStrategy(worker): StrategyChange[]
-store.appendTx({ ts, actor, method, args, txHash })   /  store.readTx()
+store.appendStrategy(worker, change: StrategyChange)  /  store.readStrategy(worker) / store.strategyWorkers()
+store.appendTx(entry)  /  store.readTx()
 store.readIndex()                // [{hash, kind, bounty_id, round, actor, ts}]
-store.exportSnapshot(dir)        // copies offchain/, strategy/, tx.jsonl, index.jsonl into dir (web/public/offchain)
+store.writeJson(name, obj)       // e.g. chain-state.json
+store.exportSnapshot(dir)        // copies offchain/, strategy/, *.jsonl, *.json into dir (web/public/offchain)
 ```
-All writes are sync (`fs.*Sync`) so agents in one process never race.
+All writes are synchronous (`fs.*Sync`), so agents running in one process never race.
 
 ### LLM (NEAR AI Cloud, OpenAI-compatible)
 
 ```ts
-llmAvailable(): boolean                                 // NEARAI_API_KEY set and HIVEFUND_MODE !== "mock"
-chat(messages, { json?, schema?, model?, temperature?, maxTokens? }): Promise<string | null>   // null => use fallback
+llmAvailable(): boolean          // NEARAI_API_KEY set and HIVEFUND_MODE !== "mock"
+chat(messages, { json?, schema?, schemaName?, model?, temperature?, maxTokens?, thinkingTokenBudget? })
+  : Promise<{ content, model, usage } | null>      // null => caller uses its deterministic fallback
+chatJsonFull<T>(messages, opts): Promise<{ data: T, content, model, usage } | null>
 chatJson<T>(messages, opts): Promise<T | null>
-llmModel(): string                                      // NEARAI_MODEL || "z-ai/glm-5.3-flash"
+llmModel(): string               // NEARAI_MODEL || "z-ai/glm-5.3-flash"
 ```
+- **Reasoning:** GLM thinking is disabled by default (`chat_template_kwargs.enable_thinking=false`), because otherwise the reasoning uses up `max_tokens` and the content comes back empty. Pass `thinkingTokenBudget` to allow some reasoning.
+- **Structured output:** strict `json_schema` is tried first, then `json_object`.
+- **Security:** the key is never logged.
 
 ### Config / env
 
 ```ts
 repoRoot(): string
 loadEnv(): void                         // .env.local then .env into process.env (does not override existing vars)
-getMode(): "mock" | "testnet"           // HIVEFUND_MODE, default "mock"
+getMode(): "mock" | "testnet"           // HIVEFUND_MODE, default "testnet"
 dataDir(): string
 loadDeployment(path?): DeploymentConfig | null   // config/deployment.testnet.json
+requireEnv(name): string
 ```
 
-### Agent contract (what the workers and verifier packages export; Stream C)
+### Agents (as built by Stream C, loaded by `agents/coordinator/src/agents.ts`)
 
-Stream B's `demo.ts` dynamically imports `@hivefund/worker-cheap`, `@hivefund/worker-quality`, `@hivefund/worker-adaptive` and `@hivefund/verifier`. It expects:
-
-```ts
-interface AgentContext {
-  hub: HubClient;            // signs as this agent
-  store: OffchainStore;
-  contractId: string;        // hub account id (goes into bidPayload.contract)
-  accountId: string;         // this agent's account
-  now: () => number;         // ms; use for eta/deadline math (mock clock in demo)
-  log: (msg: string) => void;
-  mode: "mock" | "testnet";
-  repoRoot: string;          // to resolve /bounties
-}
-interface WorkerContext extends AgentContext { bidKey: string }   // ed25519 bid-signing secret
-
-interface Agent { name: string; accountId: string; tick(): Promise<void> }
-
-// each worker package:   export function createWorker(ctx: WorkerContext): Agent
-// verifier package:      export function createVerifier(ctx: AgentContext): Agent
-```
-- **Worker `tick()`** bids on Open/Bidding bounties it hasn't bid on this round, and submits work for bounties it has won (status InProgress with its bid as the winner).
-- **Verifier `tick()`** verifies every bounty with status Verifying.
-- Both read state with `hub.view("get_bounties", {})`, `hub.view("get_bids", { bounty_id })` and so on.
+- **Workers:** `createCheapWorker` / `createQualityWorker` / `createAdaptiveWorker` take `{ accountId, contract, bidKey, now, log, llm? }` and return a `Worker`, whose method is `tick(hub, store)`.
+- **Verifier:** `new Verifier({ accountId, now, log, llm? })`, then `.tick(hub, store)`.
+- **Context:** an `AgentContext` (`hub`, `store`, `contractId`, `accountId`, `now`, `log`, `mode`, `repoRoot`) is merged into the factory options. In mock mode the loader passes `llm: null`, which is simulation mode with no LLM calls.

@@ -18,8 +18,8 @@ import type {
 import { isHash } from "../canonical.ts";
 import { bidPayload } from "../bid.ts";
 import { YOCTO_PER_MILLINEAR } from "../mint.ts";
-import type { CallOpts, CallResult, HubClient } from "./hub.ts";
-import { HubCallError } from "./hub.ts";
+import type { CallOpts, CallResult, HubClient, TxLogEntry } from "./hub.ts";
+import { HubCallError, withResultIds } from "./hub.ts";
 
 const MAX_TITLE = 120;
 const MAX_SIG = 200;
@@ -157,8 +157,8 @@ export class MockChain {
   }
 
   /** HubClient for the bounty-hub contract signed as `accountId`. */
-  client(accountId: AccountId): HubClient {
-    return new MockHubClient(this, accountId, this.hubId);
+  client(accountId: AccountId, onTx?: (e: TxLogEntry) => void): HubClient {
+    return new MockHubClient(this, accountId, this.hubId, onTx);
   }
   /** HubClient for the hive-token contract signed as `accountId`. */
   tokenClient(accountId: AccountId): HubClient {
@@ -550,9 +550,11 @@ export class MockChain {
     if (passed && score > 0) {
       win.status = "Paid";
       b.status = "Completed";
+      // invariant (as in the contract): committed_total = escrowed + paid_out
       s.treasury.escrowed -= b.budget;
       s.treasury.paid_out += win.price;
       s.treasury.available += b.budget - win.price;
+      s.treasury.committed_total -= b.budget - win.price;
       s.near.set(win.worker, (s.near.get(win.worker) ?? 0n) + win.price);
       this.log(caller, "VerificationPassed", b.id, win.id, null, `passed, score ${score}, checks ${hash.slice(0, 12)}…`);
       this.log(caller, "Payout", b.id, win.id, win.price, `paid ${win.worker} ${win.price} yocto`);
@@ -632,6 +634,7 @@ export class MockChain {
     s.treasury.escrowed -= b.budget;
     s.treasury.available += b.budget;
     s.treasury.refunded_total += b.budget;
+    s.treasury.committed_total -= b.budget;
     b.status = "Cancelled";
     b.updated_ms = this.now;
     for (const id of b.bid_ids) if (s.bids[id].status === "Pending") s.bids[id].status = "Superseded";
@@ -710,13 +713,33 @@ export class MockHubClient implements HubClient {
     private readonly chain: MockChain,
     readonly accountId: AccountId,
     readonly contractId: AccountId,
+    private readonly onTx?: (e: TxLogEntry) => void,
   ) {}
   async view<T>(method: string, args: Record<string, unknown> = {}): Promise<T> {
     return structuredClone(this.chain._view(this.contractId, method, args)) as T;
   }
   async call<T = unknown>(method: string, args: Record<string, unknown>, opts: CallOpts = {}): Promise<CallResult<T>> {
-    const r = this.chain._call(this.contractId, this.accountId, method, structuredClone(args), opts);
-    return r as CallResult<T>;
+    try {
+      const r = this.chain._call(this.contractId, this.accountId, method, structuredClone(args), opts);
+      this.log(method, withResultIds(method, args, r.result), r.txHash, true);
+      return r as CallResult<T>;
+    } catch (e) {
+      const err = e as HubCallError;
+      this.log(method, args, err.txHash ?? null, false, err.message);
+      throw e;
+    }
+  }
+  private log(method: string, args: Record<string, unknown>, txHash: string | null, ok: boolean, error?: string) {
+    this.onTx?.({
+      ts: this.chain.nowMs(),
+      actor: this.accountId,
+      contract: this.contractId,
+      method,
+      args,
+      txHash,
+      ok,
+      ...(error ? { error: error.slice(0, 500) } : {}),
+    });
   }
 }
 

@@ -164,7 +164,7 @@ export class NearHubClient implements HubClient {
           contractId: this.contractId,
           methodName: method,
           args,
-          gas: teraToGas(opts.gasTGas ?? 100),
+          gas: teraToGas(gasFor(method, opts.gasTGas)),
           deposit: BigInt(opts.depositYocto ?? "0"),
         });
         this.active = idx;
@@ -181,7 +181,7 @@ export class NearHubClient implements HubClient {
         } catch {
           result = undefined;
         }
-        this.log(method, args, txHash, true);
+        this.log(method, args, txHash, true, undefined, result);
         return { txHash, result: result as T };
       } catch (e) {
         if (e instanceof HubCallError) throw e;
@@ -197,7 +197,7 @@ export class NearHubClient implements HubClient {
     throw err;
   }
 
-  private log(method: string, args: Record<string, unknown>, txHash: string | null, ok: boolean, error?: string) {
+  private log(method: string, args: Record<string, unknown>, txHash: string | null, ok: boolean, error?: string, result?: unknown) {
     if (!this.onTx) return;
     try {
       this.onTx({
@@ -205,7 +205,7 @@ export class NearHubClient implements HubClient {
         actor: this.accountId,
         contract: this.contractId,
         method,
-        args,
+        args: withResultIds(method, args, result),
         txHash,
         ok,
         ...(error ? { error: error.slice(0, 500) } : {}),
@@ -217,7 +217,40 @@ export class NearHubClient implements HubClient {
   }
 }
 
-const FINAL_PATTERN = /Smart contract panicked|ERR_[A-Z_]+|MethodNotFound|CodeDoesNotExist|AccessKey|NotEnoughBalance|LackBalance/i;
+/**
+ * Per-method gas caps (TGas). Agent function-call keys carry a small allowance (0.05 NEAR), and NEAR
+ * reserves allowance for the full attached gas, so agent calls attach only what they need:
+ * 30 TGas for every agent method, 60 TGas for verify_bounty (it spawns hive.mint + callback).
+ * A caller's gasTGas above the cap is clamped. Unknown (owner) methods default to 30, max 300.
+ */
+export const METHOD_GAS_TGAS: Record<string, number> = {
+  post_bounty: 30,
+  select_winner: 30,
+  reject_bid: 30,
+  cancel_bounty: 30,
+  place_bid: 30,
+  submit_work: 30,
+  verify_bounty: 60,
+  retry_mint: 60,
+};
+
+export function gasFor(method: string, requested?: number): number {
+  const cap = METHOD_GAS_TGAS[method];
+  if (cap !== undefined) return requested ? Math.min(requested, cap) : cap;
+  return Math.min(requested ?? 30, 300);
+}
+
+/** Add ids returned by the call to the logged args (post_bounty -> bounty_id, place_bid -> bid_id). */
+export function withResultIds(method: string, args: Record<string, unknown>, result: unknown): Record<string, unknown> {
+  const id = typeof result === "number" ? result : typeof result === "string" && /^\d+$/.test(result) ? Number(result) : null;
+  if (id === null) return args;
+  if (method === "post_bounty") return { ...args, bounty_id: id };
+  if (method === "place_bid") return { ...args, bid_id: id };
+  return args;
+}
+
+const FINAL_PATTERN =
+  /Smart contract panicked|ERR_[A-Z_]+|MethodNotFound|MethodResolveError|CodeDoesNotExist|does not exist|AccessKey|NotEnoughBalance|LackBalance|NotEnoughAllowance/i;
 const TRANSIENT_PATTERNS = [
   /fetch failed/i,
   /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/,

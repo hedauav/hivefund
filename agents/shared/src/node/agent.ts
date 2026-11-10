@@ -179,7 +179,8 @@ export async function createMockMarket(opts: MockMarketOpts): Promise<Market> {
     mintRate: opts.mintRate ?? DEFAULT_MINT_RATE.toString(),
     nowMs: opts.nowMs,
   });
-  const owner = chain.client(A.owner);
+  const ownerTx = (e: Parameters<OffchainStore["appendTx"]>[0]) => opts.store.appendTx(e);
+  const owner = chain.client(A.owner, ownerTx);
   await owner.call("set_coordinator", { account_id: A.coordinator });
   await owner.call("set_verifier", { account_id: A.verifier });
   const bidKeys = { cheap: newBidKey(), quality: newBidKey(), adaptive: newBidKey(), forger: newBidKey() };
@@ -190,8 +191,9 @@ export async function createMockMarket(opts: MockMarketOpts): Promise<Market> {
 
   const now = () => chain.nowMs();
   const root = repoRoot();
+  const onTx = (e: Parameters<OffchainStore["appendTx"]>[0]) => opts.store.appendTx(e);
   const base = (name: string, accountId: AccountId): AgentContext => ({
-    hub: chain.client(accountId),
+    hub: chain.client(accountId, onTx),
     store: opts.store,
     contractId: A.hub,
     accountId,
