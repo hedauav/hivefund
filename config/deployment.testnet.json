@@ -75,8 +75,14 @@
   },
   "sampleTxs": {
     "deploy": "86VrxGgXNYdw4Scgk77dWh1hKLKasAaaPuN2dybNBHpc",
-    "verifyPass": "",
-    "selfCheckNotVerifier": "7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9"
+    "verifyPass": "J48nSqTgdVx824CD2TUaZ2gVKuZgCErfF5QaGCiS5zKY",
+    "selfCheckNotVerifier": "7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9",
+    "mint": "J48nSqTgdVx824CD2TUaZ2gVKuZgCErfF5QaGCiS5zKY",
+    "forgedBidPlaced": "CrZYDzyk7tRJEMXFHoAnr1F4YYh7rdgwJ11XRL6JUs1Y",
+    "forgedBidRejected": "FSFeuRkABATYE54XPTWr1xkigA3oSZyvTBqHjhi3XuH4",
+    "verifyFail": "5bsVDbGxVyYgoooBCaKCpYGMejvNpsRC8qU35YniFabR",
+    "verifyFailCancelRefund": "2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW",
+    "verifyPassAfterReopen": "GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r"
   },
   "selfCheck": {
     "at": "2026-11-10T10:39:31.740Z",
@@ -173,5 +179,13 @@
         "detail": "tx https://testnet.nearblocks.io/txns/7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9 panicked ERR_NOT_VERIFIER"
       }
     ]
+  },
+  "sampleTxsNotes": {
+    "verifyPass": "bounty 1 (checklist) passed at score 90; the same tx pays quality 0.02782 NEAR and its cross-contract receipt mints 0.243 HIVE",
+    "mint": "HIVE mint is a cross-contract receipt of the verifyPass transaction (hub -> hive.mint, then on_mint_complete)",
+    "forgedBidRejected": "coordinator rejected forger bid 5 on bounty 0: invalid bid signature",
+    "verifyFail": "bounty 0 round 0: adaptive deliverable failed (LLM output truncated -> honest failed deliverable); bounty reopened",
+    "verifyFailCancelRefund": "bounty 0 round 1: quality deliverable failed the acceptance test (11/37); second failure -> Cancelled, 0.1 NEAR refunded to treasury",
+    "verifyPassAfterReopen": "npm run test:testnet: bounty 2 failed in round 0 (quality), reopened, adaptive won the rebid and passed at score 100"
   }
 }

@@ -89,7 +89,7 @@ test(
     const market = createTestnetMarket({ logSink: () => {} });
     const H = "0".repeat(64);
     // Function-call keys are restricted to each agent's own methods (access-key layer)…
-    const keyOrContract = /ERR_NOT_VERIFIER|ERR_NOT_COORDINATOR|ERR_NOT_WORKER|MethodName|AccessKey/i;
+    const keyOrContract = /ERR_NOT_VERIFIER|ERR_NOT_COORDINATOR|ERR_NOT_WORKER|MethodName|AccessKey|Access key does not allow/i;
     await assert.rejects(market.coordinator.hub.call("verify_bounty", { bounty_id: 0, passed: true, score: 100, check_results_hash: H }), keyOrContract);
     await assert.rejects(market.verifier.hub.call("select_winner", { bounty_id: 0, bid_id: 0 }), keyOrContract);
     // …and the contract enforces roles even for a full-access key (owner is none of these roles).
