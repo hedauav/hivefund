@@ -23,7 +23,10 @@
     "typecheck:b": "tsc --noEmit -p agents/shared && tsc --noEmit -p agents/coordinator && tsc --noEmit -p tests",
     "setup:testnet": "tsx scripts/setup-testnet.ts",
     "web": "npm -w web run dev",
-    "typecheck:shared": "tsc --noEmit -p agents/shared"
+    "typecheck:shared": "tsc --noEmit -p agents/shared",
+    "typecheck": "tsc --noEmit -p agents/shared && tsc --noEmit -p agents/coordinator && tsc --noEmit -p agents/worker-core && tsc --noEmit -p agents/worker-cheap && tsc --noEmit -p agents/worker-quality && tsc --noEmit -p agents/worker-adaptive && tsc --noEmit -p agents/verifier && tsc --noEmit -p tests && tsc --noEmit -p scripts && tsc --noEmit -p web",
+    "test:agents": "npm -w @hivefund/worker-core test && npm -w @hivefund/verifier test",
+    "web:build": "npm -w web run build"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

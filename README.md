@@ -91,9 +91,21 @@ Bounty lifecycle (enforced by the hub): `Open → Bidding → InProgress → Ver
 
 ## Quickstart (do X → see Y)
 
-Requirements: Node ≥ 22.22.2, npm, git. For contracts: Rust via rustup with the `wasm32-unknown-unknown` target and `cargo-near`. `contracts/rust-toolchain.toml` pins Rust 1.95.0.
+Requirements: Node ≥ 22.22.2, npm, git. Contracts additionally need Rust (via rustup) with the `wasm32-unknown-unknown` target and `cargo-near`. `contracts/rust-toolchain.toml` pins Rust 1.95.0, which rustup installs on first use.
 
-1. **Install.** Run `npm install` at the repo root. You see the npm workspaces installed: `agents/*`, `web`, `tests`.
+Contract toolchain on **macOS/Linux** (from the NEAR docs):
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup target add wasm32-unknown-unknown
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+```
+
+On **Windows**, install rustup from https://rustup.rs and cargo-near with `irm https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.ps1 | iex`. Without the MSVC C++ build tools, see the Windows note in step 2.
+
+Steps 1, 3–5 and 8 need no keys or NEAR account. Steps 6, 7 and 9 sign testnet transactions.
+
+1. **Install.** Run `npm ci` at the repo root (installs exactly the committed lockfile). You see the npm workspaces installed: `agents/*`, `web`, `tests`. An `allow-scripts` warning about esbuild's postinstall is harmless; `tsx` works without it. Optionally run `npm run typecheck` (all TypeScript packages, including `web`) and see no errors.
 2. **Build contracts.**
    - macOS/Linux: `bash scripts/build-contracts.sh`
    - Windows: `powershell -File scripts/build-contracts.ps1`
@@ -102,9 +114,9 @@ Requirements: Node ≥ 22.22.2, npm, git. For contracts: Rust via rustup with th
    - The scripts run `cargo near build non-reproducible-wasm --no-abi`.
    - *Windows note:* without the MSVC C++ build tools, use the GNU toolchain: rustup default host `x86_64-pc-windows-gnu` plus a MinGW-w64 `gcc` (e.g. WinLibs) on PATH. `--no-abi` is needed there because the ABI step links a native DLL that fails with the GNU linker.
 3. **Contract unit tests.** Run `cd contracts && cargo test`. You see 80 tests pass (71 bounty-hub, 9 hive-token), including the golden bid-payload vector shared with the TypeScript code.
-4. **Agent and e2e tests.** Run `npm test`. The unit tests and the mock-chain end-to-end lifecycle pass; the testnet-gated tests are skipped.
+4. **Agent and e2e tests.** Run `npm test`. You see 17 pass and 2 skipped: the unit tests and the mock-chain end-to-end lifecycle pass; the 2 testnet-gated tests are skipped.
    - The mock e2e covers: forged bid rejected → automated check fails → bounty reopens → rebid → pass → payout → mint, with market invariants checked.
-   - Worker and verifier tests: `node --import tsx --test "test/**/*.test.ts"` inside `agents/worker-core` and `agents/verifier`.
+   - Worker and verifier tests: run `npm run test:agents`. You see 10 worker-core and 16 verifier tests pass (slugify fixture: a sloppy implementation fails the acceptance test, a careful one passes; path traversal outside `/bounties` is refused).
 5. **Offline simulation (no chain, no LLM).** Run `npm run demo:mock`. You see a summary table of bounties, bids, verdicts, payouts and HIVE minted. Data goes to `data/mock/`. Reports say `rubric.mode: "fallback"` because no LLM is used.
 6. **Real testnet run.**
    1. Copy `.env.example` to `.env.local` and fill in the keys.
@@ -116,7 +128,7 @@ Requirements: Node ≥ 22.22.2, npm, git. For contracts: Rust via rustup with th
 7. **Testnet e2e and role tests.** Run `npm run test:testnet`. You see the same market invariants checked on real transactions. Role refusals are checked at both layers:
    - **access key:** "Access key does not allow method …";
    - **contract:** `ERR_NOT_VERIFIER`, `ERR_NOT_COORDINATOR`, `ERR_NOT_WORKER`.
-8. **Dashboard.** Run `npm run web` and open http://localhost:3000. You see live data from `hub.hivefund-2026.testnet`.
+8. **Dashboard.** Run `npm run web` and open http://localhost:3000 (or `npm run web:build` for a production build). You see live data from `hub.hivefund-2026.testnet`.
    - If no deployment config exists, it shows a fixture with a "SAMPLE DATA — NOT LIVE" banner.
    - Each bounty links to its spec, bids, verification report (hash recomputed in the browser) and mint trace.
 9. **Deploy your own copy (optional).** Run `npx tsx scripts/setup-testnet.ts --dry-run` and then without `--dry-run`. You see the accounts, contracts, roles, function-call keys and treasury created idempotently, followed by an 18-point self-check.
