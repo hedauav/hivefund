@@ -4,6 +4,7 @@ import type { Bounty, BountySpec } from "@hivefund/shared";
 import { useOffchain } from "@/hooks/use-offchain";
 import { near, shortHash } from "@/lib/format";
 import { Card, Check, Mono } from "./ui";
+import { ProcurementRequest } from "./procurement-view";
 
 export function SpecPanel({ bounty }: { bounty: Bounty }) {
   const s = useOffchain<BountySpec>(bounty.spec_hash);
@@ -24,8 +25,9 @@ export function SpecPanel({ bounty }: { bounty: Bounty }) {
       ) : (
         <div className="space-y-3 text-sm">
           <p>{s.object.description}</p>
+          {s.object.procurement && <ProcurementRequest p={s.object.procurement} />}
           <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-xs">
-            <dt className="text-muted">Budget</dt>
+            <dt className="text-muted">{s.object.procurement ? "Bounty reward" : "Budget"}</dt>
             <dd>{near(s.object.budget_yocto)}</dd>
             <dt className="text-muted">Min tier</dt>
             <dd>{s.object.min_tier}</dd>

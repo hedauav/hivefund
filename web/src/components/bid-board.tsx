@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { verifyBid, type Bid, type Bounty, type SelectionRationale, type WorkerView } from "@hivefund/shared";
+import { verifyBid, type Bid, type Bounty, type BountySpec, type SelectionRationale, type WorkerView } from "@hivefund/shared";
 import { useHub } from "@/providers/data-provider";
 import { useOffchain } from "@/hooks/use-offchain";
 import { minutes, near, shortHash } from "@/lib/format";
 import { Account, BidStatusChip, Card, Check, Chip, cx, Empty, TxLink } from "./ui";
+import { ProcurementTag } from "./procurement-view";
 
 const RED: Bid["status"][] = ["Rejected", "Superseded", "Failed"];
 
@@ -14,10 +15,17 @@ export function BidBoard({ bounty, compact = false }: { bounty: Bounty; compact?
   const bids = useMemo(() => (snapshot?.bids ?? []).filter((b) => b.bounty_id === bounty.id), [snapshot, bounty.id]);
   const rounds = [...new Set(bids.map((b) => b.round))].sort((a, z) => z - a);
   const workers = useMemo(() => new Map((snapshot?.reputation ?? []).map((w) => [w.account_id, w])), [snapshot]);
+  const spec = useOffchain<BountySpec>(bounty.spec_hash);
+  const isProc = spec.status === "ok" && !!spec.object.procurement;
   return (
     <Card
       n="03"
-      title={`Bids on #${bounty.id}`}
+      title={
+        <>
+          Bids on #{bounty.id}
+          {isProc && <ProcurementTag />}
+        </>
+      }
       subtitle={compact ? bounty.title : "all rounds, rejected bids included"}
     >
       {!bids.length ? (

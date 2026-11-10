@@ -11,6 +11,30 @@ export type OffchainState<T> =
   | { status: "ok"; object: T; recomputed: string };
 
 const cache = new Map<string, unknown>();
+const inflight = new Map<string, Promise<unknown | null>>();
+
+/**
+ * Promise form of useOffchain for lists (shares the same cache). Resolves to the object only when
+ * sha256(canonical JSON) equals the requested hash; anything else resolves to null.
+ */
+export function loadOffchain<T>(hash: string): Promise<T | null> {
+  if (cache.has(hash)) return Promise.resolve(cache.get(hash) as T);
+  let p = inflight.get(hash);
+  if (!p) {
+    p = fetch(`/api/offchain/${hash}`, { cache: "no-store" })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        const body = await r.json().catch(() => null);
+        if (!body || hashJson(body.object) !== hash) return null;
+        cache.set(hash, body.object);
+        return body.object as unknown;
+      })
+      .catch(() => null)
+      .finally(() => inflight.delete(hash));
+    inflight.set(hash, p);
+  }
+  return p as Promise<T | null>;
+}
 
 /**
  * Loads an off-chain object by its content hash and re-hashes it in the browser.

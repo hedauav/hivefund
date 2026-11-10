@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useHub } from "@/providers/data-provider";
 import { ExtLink } from "../ui";
-import { apply, buildTimeline, cardPt, durationOf, emptyScene, ROLES, settle, slotOf, type BidBlock, type Scene, type TimelineEvent } from "./model";
+import { apply, buildTimeline, cardPt, durationOf, emptyScene, reportHashOf, ROLES, settle, slotOf, type ArenaProc, type BidBlock, type Scene, type TimelineEvent } from "./model";
+import { useEvidenceByReport, useProcurement } from "@/hooks/use-procurement";
 import { Crate, Sprite } from "./sprites";
 
 const KEEP = 14; // on first load, older history is fast-forwarded; the last KEEP events are replayed
@@ -20,6 +21,17 @@ export function SwarmArena() {
   const reduced = useSyncExternalStore(subscribeReduced, getReduced, () => false);
   const timeline = useMemo(() => buildTimeline(snapshot?.activity ?? [], strategy), [snapshot?.activity, strategy]);
   const titles = useMemo(() => new Map((snapshot?.bounties ?? []).map((b) => [b.id, b.title])), [snapshot?.bounties]);
+  const procMap = useProcurement(snapshot?.bounties);
+  const reportHashes = useMemo(
+    () =>
+      (snapshot?.activity ?? [])
+        .filter((e) => (e.kind === "VerificationPassed" || e.kind === "VerificationFailed") && e.bounty_id != null && procMap.has(e.bounty_id))
+        .map((e) => reportHashOf(e.detail))
+        .filter((h): h is string => !!h),
+    [snapshot?.activity, procMap],
+  );
+  const evidence = useEvidenceByReport(reportHashes);
+  const proc = useMemo<ArenaProc>(() => ({ bounties: new Set(procMap.keys()), evidence }), [procMap, evidence]);
 
   const [scene, setScene] = useState<Scene>(emptyScene);
   const [playing, setPlaying] = useState(true);
@@ -36,10 +48,10 @@ export function SwarmArena() {
       const silent = all ? pending : played.current.size === 0 && pending.length > KEEP ? pending.slice(0, -KEEP) : [];
       setScene((s) => {
         let next = s;
-        for (const e of silent) next = apply(next, e, titles);
+        for (const e of silent) next = apply(next, e, titles, proc);
         if (silent.length) next = settle(next);
         const head = all ? undefined : pending[silent.length];
-        return head ? apply(next, head, titles) : next;
+        return head ? apply(next, head, titles, proc) : next;
       });
       for (const e of silent) played.current.add(e.key);
       const head = all ? undefined : pending[silent.length];
@@ -49,7 +61,7 @@ export function SwarmArena() {
       }
       return true;
     },
-    [timeline, titles],
+    [timeline, titles, proc],
   );
 
   useEffect(() => {
@@ -137,9 +149,22 @@ export function SwarmArena() {
           {visible.map((id) => {
             const c = scene.cards[id];
             const p = cardPt(slotOf(scene.cards, id));
+            const isProc = proc.bounties.has(id);
             return (
-              <div key={id} className={`card st-${c.status}`} style={{ left: `${p.x}%`, top: `${p.y}%` }} title={titles.get(id)}>
-                <span className="card-id">#{id}</span>
+              <div
+                key={id}
+                className={`card st-${c.status}${isProc ? " proc" : ""}`}
+                style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                title={`${titles.get(id) ?? ""}${isProc ? " · procurement: find the best real item under budget" : ""}`}
+              >
+                <span className="card-id">
+                  {isProc && (
+                    <span className="card-crate" aria-label="procurement">
+                      <Crate color="#8B6B4A" />
+                    </span>
+                  )}
+                  #{id}
+                </span>
                 <span className="card-st">{c.status}</span>
                 <div className="blocks">
                   {(bidsBy.get(id) ?? []).slice(-8).map((b) => (
@@ -212,22 +237,22 @@ export function SwarmArena() {
         {height != null && explorer.enabled && <ExtLink href={explorer.block(height)}>block {height.toLocaleString()}</ExtLink>}
       </footer>
 
-      {reduced && <ReducedList timeline={timeline} titles={titles} />}
+      {reduced && <ReducedList timeline={timeline} titles={titles} proc={proc} />}
     </section>
   );
 }
 
 /** prefers-reduced-motion: the same events as a numbered, readable list. */
-function ReducedList({ timeline, titles }: { timeline: TimelineEvent[]; titles: Map<number, string> }) {
+function ReducedList({ timeline, titles, proc }: { timeline: TimelineEvent[]; titles: Map<number, string>; proc: ArenaProc }) {
   const lines = useMemo(() => {
     const out: { key: string; text: string }[] = [];
     timeline.reduce((s, e) => {
-      const next = apply(s, e, titles);
+      const next = apply(s, e, titles, proc);
       out.push({ key: e.key, text: next.caption });
       return next;
     }, emptyScene());
     return out;
-  }, [timeline, titles]);
+  }, [timeline, titles, proc]);
   return (
     <ol className="max-h-56 list-decimal overflow-y-auto border-t-[1.5px] border-ink px-8 py-2 text-sm">
       {lines.slice(-20).map((l) => (

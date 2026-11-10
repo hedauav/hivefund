@@ -1,6 +1,6 @@
 // Swarm arena: a pure reducer over real market events (get_activity_log + strategy logs).
 // The arena never invents events; every frame is the result of one logged action.
-import { formatHive, formatNear, type ActivityEntry, type StrategyChange } from "@hivefund/shared";
+import { formatHive, formatNear, type ActivityEntry, type ProcurementEvidence, type StrategyChange } from "@hivefund/shared";
 import { humanizeDetail } from "@/lib/format";
 
 export type Role = "cheap" | "quality" | "adaptive" | "forger" | "coordinator" | "verifier";
@@ -31,6 +31,29 @@ export type BidState = "pending" | "rejected" | "won" | "lost" | "failed" | "pai
 export interface Card {
   id: number;
   status: "open" | "taken" | "verifying" | "passed" | "failed" | "done" | "cancelled";
+}
+
+/** Procurement context for captions: which bounties are procurement, and evidence per report hash. */
+export interface ArenaProc {
+  bounties: Set<number>;
+  evidence: Map<string, ProcurementEvidence>;
+}
+const NO_PROC: ArenaProc = { bounties: new Set(), evidence: new Map() };
+
+/** The report hash a VerificationPassed/Failed log line points at ("... checks <hash>"). */
+export const reportHashOf = (detail: string) => detail.match(/checks ([0-9a-f]{64})/)?.[1] ?? null;
+
+const usd = (n: number | null) => (n == null ? "?" : `$${n < 1 ? n.toFixed(3) : n.toFixed(2)}`);
+function procCaption(ev: ProcurementEvidence, ok: boolean): string {
+  const failedReq = ev.requirement_checks.filter((c) => !c.passed).map((c) => c.requirement);
+  const parts = ev.found
+    ? [
+        `re-fetched the live price of ${ev.item_id}: ${usd(ev.live_workload_cost_usd)} ${ev.within_budget ? "≤" : ">"} budget ${usd(ev.budget_usd)} ${ev.within_budget ? "✓" : "✗"}`,
+        `quote ${ev.price_match ? "matches ✓" : "differs ✗"}`,
+        failedReq.length ? `missing ${failedReq.join(", ")} ✗` : "requirements ✓",
+      ]
+    : [`${ev.item_id} is not in the live catalog ✗`];
+  return `The verifier ${ok ? "passes" : "fails"} the pick: ${parts.join("; ")}.`;
 }
 export interface BidBlock {
   id: number;
@@ -117,7 +140,7 @@ export function durationOf(ev: TimelineEvent): number {
 }
 
 /** Apply one event. Agents not involved in it walk home. */
-export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string>): Scene {
+export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string>, proc: ArenaProc = NO_PROC): Scene {
   const s: Scene = { ...prev, cards: { ...prev.cards }, bids: { ...prev.bids }, pos: { ...prev.pos }, fx: [], bubble: null, last: ev, n: prev.n + 1 };
   const moved = new Set<Role>();
   const go = (r: Role | null, p: Pt, carry = false) => {
@@ -186,7 +209,10 @@ export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string
         go("verifier", HOME.verifier);
         go(bidRole, BENCH);
         s.fx.push({ k: ok ? "check" : "cross" });
-        s.caption = ok
+        const evd = proc.evidence.get(reportHashOf(e.detail) ?? "");
+        s.caption = evd
+          ? procCaption(evd, ok)
+          : ok
           ? `The verifier passes the work on ${bLabel}: ${humanizeDetail(e.detail)}.`
           : `The verifier fails the work on ${bLabel}: ${humanizeDetail(e.detail)}.`;
         break;

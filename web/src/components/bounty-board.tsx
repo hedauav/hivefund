@@ -5,10 +5,13 @@ import type { Bounty } from "@hivefund/shared";
 import { useHub } from "@/providers/data-provider";
 import { near, hive, timeAgo, shortHash } from "@/lib/format";
 import { Account, BountyStatusChip, Card, Empty, Mono, TxLink } from "./ui";
+import { useProcurement } from "@/hooks/use-procurement";
+import { ProcurementTag } from "./procurement-view";
 
 export function BountyBoard({ selected, onSelect }: { selected?: number | null; onSelect?: (id: number) => void }) {
   const { snapshot, txs } = useHub();
   const bounties = [...(snapshot?.bounties ?? [])].sort((a, b) => b.updated_ms - a.updated_ms);
+  const procurement = useProcurement(snapshot?.bounties);
   return (
     <Card id="bounties" n="02" title="Bounties" subtitle="budget held in escrow until verified">
       {!bounties.length ? (
@@ -28,7 +31,7 @@ export function BountyBoard({ selected, onSelect }: { selected?: number | null; 
             </thead>
             <tbody>
               {bounties.map((b) => (
-                <BountyRow key={b.id} b={b} active={selected === b.id} onSelect={onSelect} postTx={txs.bountyPosted(b.id, b.title)} />
+                <BountyRow key={b.id} b={b} active={selected === b.id} onSelect={onSelect} postTx={txs.bountyPosted(b.id, b.title)} procurement={procurement.has(b.id)} />
               ))}
             </tbody>
           </table>
@@ -38,7 +41,19 @@ export function BountyBoard({ selected, onSelect }: { selected?: number | null; 
   );
 }
 
-function BountyRow({ b, active, onSelect, postTx }: { b: Bounty; active: boolean; onSelect?: (id: number) => void; postTx: string | null }) {
+function BountyRow({
+  b,
+  active,
+  onSelect,
+  postTx,
+  procurement,
+}: {
+  b: Bounty;
+  active: boolean;
+  onSelect?: (id: number) => void;
+  postTx: string | null;
+  procurement: boolean;
+}) {
   const bidsCount = b.bid_ids.length;
   return (
     <tr
@@ -50,6 +65,7 @@ function BountyRow({ b, active, onSelect, postTx }: { b: Bounty; active: boolean
         <Link href={`/bounty/${b.id}`} className="font-medium hover:text-accent-text" onClick={(e) => e.stopPropagation()}>
           {b.title}
         </Link>
+        {procurement && <ProcurementTag />}
         <div className="text-xs text-muted">
           {bidsCount} bid{bidsCount === 1 ? "" : "s"} · tier ≥{b.min_tier} · due {timeAgo(b.deadline_ms)}
           {b.status === "Completed" && BigInt(b.hive_minted) > 0n && <> · minted {hive(b.hive_minted, 2)}</>}

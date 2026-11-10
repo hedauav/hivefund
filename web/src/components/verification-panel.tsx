@@ -5,6 +5,7 @@ import { useHub } from "@/providers/data-provider";
 import { useOffchain } from "@/hooks/use-offchain";
 import { shortHash } from "@/lib/format";
 import { Account, Card, Check, Chip, cx, Empty, Mono, TxLink } from "./ui";
+import { EvidenceTable, ProcurementTag, ProposalFromHash } from "./procurement-view";
 
 export function VerificationPanel({ bounty }: { bounty: Bounty }) {
   const { index } = useHub();
@@ -20,7 +21,7 @@ export function VerificationPanel({ bounty }: { bounty: Bounty }) {
       id="verification"
       n="04"
       title={`Verification of #${bounty.id}`}
-      subtitle="schema → test → rubric; pass needs every automated check and rubric ≥ threshold"
+      subtitle="automated checks first (schema, sections, test or live catalog), then rubric; pass needs every check and rubric ≥ threshold"
     >
       {!reportHashes.length ? (
         <Empty hint="A report appears once the winning worker submits a deliverable.">
@@ -55,6 +56,7 @@ function ReportView({ hash, onChain, bounty }: { hash: string; onChain: boolean;
       <div className="flex flex-wrap items-center gap-2">
         <Chip tone={rep.passed ? "bg-ok-soft text-ok" : "bg-bad-soft text-bad"}>{rep.passed ? "PASS" : "FAIL"}</Chip>
         <span className="text-sm font-semibold">score {rep.score}</span>
+        {rep.procurement && <ProcurementTag />}
         <span className="text-xs text-muted">
           round {rep.round} · worker <Account id={rep.worker} /> · verifier <Account id={rep.verifier} />
         </span>
@@ -95,6 +97,15 @@ function ReportView({ hash, onChain, bounty }: { hash: string; onChain: boolean;
           </li>
         ))}
       </ol>
+
+      {rep.procurement && (
+        <>
+          <div className="mt-3">
+            <ProposalFromHash hash={rep.deliverable_hash} />
+          </div>
+          <EvidenceTable ev={rep.procurement} />
+        </>
+      )}
 
       {rep.rubric && (
         <div className="mt-3">

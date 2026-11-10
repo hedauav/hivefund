@@ -418,3 +418,7 @@ body {
 
 .sheet { min-width: 0; }
 .break-anywhere { overflow-wrap: anywhere; }
+
+/* procurement bounty card: drawn as a crate */
+.card.proc { background-image: repeating-linear-gradient(90deg, transparent 0 6px, rgb(0 0 0 / 0.05) 6px 7px); }
+.card-crate { display: inline-block; margin-right: 3px; vertical-align: -1px; }

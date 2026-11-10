@@ -93,3 +93,12 @@ On Vercel, API routes read `web/public/offchain/` (Stream B's `exportSnapshot`).
 - **Deployment fallback:** if `config/deployment.testnet.json` is not on the function filesystem, the bundled copy is used, so hosted builds still default to live mode.
 - **Tx links:** rows with `ok: false` (failed transactions) are ignored when choosing which tx to link. Rows without a `txHash` cannot be linked.
 - **Ledger and captions:** raw contract amounts (`… yocto`, `… HIVE-raw/HIVE-yocto`, `… ms`) are rendered in NEAR, HIVE and minutes by `humanizeDetail()`.
+
+## Procurement bounties (UI)
+
+- Detection: a bounty is procurement when its spec (loaded by hash, re-hashed in the browser) has `procurement`. `useProcurement()` / `useEvidenceByReport()` in `web/src/hooks/use-procurement.ts` share the `use-offchain` cache via `loadOffchain()`.
+- Spec panel shows the purchase request (product budget USD, workload, cost formula, hard requirements, tolerance, delivery check). The NEAR budget is labelled "Bounty reward" for these specs.
+- Verification panel: for reports with `procurement`, shows the worker proposal (deliverable data: item, quoted price, cost, catalog read time, alternatives, justification, generator) and the live-catalog evidence table (found, quoted vs live price, live cost vs budget, each requirement, delivery call). Old reports render unchanged.
+- Boards: a small crate "procurement" tag on bounty rows and the bid board title.
+- Arena: procurement cards carry a crate icon; Verification captions use the report linked by `checks <hash>` in the activity detail, e.g. "re-fetched the live price of X: $0.55 ≤ budget $3 ✓; quote matches ✓; requirements ✓".
+- `/preview/procurement`: a FIXTURE story (clearly bannered, illustrative values) for design work before a real run. Available in `next dev`; 404 in production builds unless `NEXT_PUBLIC_SHOW_PREVIEW=1`. Real procurement bounties render from on-chain hashes on `/` and `/bounty/[id]`.
