@@ -1,0 +1,17 @@
+[package]
+name = "hive-token"
+description = "HIVE: NEP-141 community token, mintable only by the HiveFund bounty-hub"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+near-contract-standards = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }
