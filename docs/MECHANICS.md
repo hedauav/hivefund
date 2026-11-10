@@ -147,7 +147,8 @@ Order and pass rule (`agents/verifier/src/verify.ts`):
 2. **test:** runs only if the spec has a test. Only `runner: "node"` is allowed, and the file must resolve inside `/bounties` after following symlinks.
    - The deliverable's code is written to a fresh temp directory: at most 10 files and 256 KB, with safe file names.
    - The test runs as `node <file> <dir>` with `shell: false`, an environment limited to PATH and SystemRoot, a timeout clamped to 1–60 s, and capped output. Exit code 0 means pass.
-3. **rubric:** runs only if steps 1 and 2 pass. Each subjective criterion is scored 0–100, and the weighted total is computed locally.
+3. **catalog** and **delivery** (procurement bounties only, see section 8).
+4. **rubric:** runs only if every non-skipped automated check passes. Each subjective criterion is scored 0–100, and the weighted total is computed locally.
 
 ```
 passed = all automated checks passed AND rubric.total ≥ pass_threshold AND rubric.total > 0
@@ -177,4 +178,47 @@ The fallback is deterministic: the same input gives the same report hash. It is 
 | Forged bid signature | coordinator calls `reject_bid(…, "invalid bid signature")`; the bid stays on-chain as `Rejected` |
 | Bid breaks a business rule | stored as `Rejected` with a reason; no panic, so the rejection stays in the log |
 | Mint callback fails | payout stands; `MintFailed` logged; `PendingMint` kept; owner `retry_mint` |
+| Procurement pick not found, price changed beyond tolerance, over budget, or a requirement unmet | `catalog` check fails, so the rubric doesn't run and the verification fails like any other |
 | Agent key allowance exhausted | `scripts/topup.ts rekey <agent>` installs a new function-call key using the human-held recovery key |
+
+## 8. Procurement bounties
+
+A procurement bounty asks workers to recommend the best-value **real** item from a public priced catalog under a USD budget. Interface: `docs/notes/procurement.md`; helpers: `agents/shared/src/procurement.ts`. <!-- VERIFY after live run -->
+
+**Catalog:** NEAR AI Cloud `GET https://cloud-api.near.ai/v1/models` (adapter `nearai-models`, public, no key). Each entry gives USD prices per 1M input and output tokens, context length, supported features and modalities. Prices are rounded to 6 decimals to remove float noise.
+
+**Two budgets:** the NEAR reward (`budget_yocto`, e.g. 0.03 NEAR) pays the winning worker as usual; the product budget (`product_budget_usd`) limits the cost of the item it recommends. Nobody buys the item from the vendor.
+
+**Cost and compliance:**
+
+```
+workload_cost = round6(pricing.input × workload.input_mtok + pricing.output × workload.output_mtok)    (USD)
+compliant     = every hard requirement passes  AND  workload_cost ≤ product_budget_usd
+```
+
+Hard requirements: `supported_features` (all listed must be present), `min_context_length`, `input_modalities`, `output_modalities`.
+
+**Verifier check order:**
+
+| # | Check | Passes when |
+|---|---|---|
+| 1 | `schema` | `deliverable.data` matches `hivefund:procurement-v1` |
+| 2 | `sections` | `summary`, `comparison`, `recommendation` present and non-empty |
+| 3 | `test` | skipped (procurement specs have no test) |
+| 4 | `catalog` | the verifier re-fetches the live catalog; the item exists; quoted input and output prices each match live within `price_tolerance_pct` (1% in the fixture, relative); live workload cost ≤ budget; every requirement passes |
+| 5 | `delivery` | one tiny real call to the chosen model through NEAR AI returns HTTP 200 with token usage. Skipped when `delivery_check` is false or there is no API key (mock) |
+| 6 | `rubric` | runs only if every non-skipped automated check passed. The LLM is given the live compliant options and scores `value` (0.5), `fit` (0.3), `justification` (0.2); pass threshold 70 |
+
+The pass rule is unchanged: all automated checks pass AND rubric total ≥ threshold.
+
+**Evidence, hash-locked:** the report carries `procurement` (`ProcurementEvidence`): catalog URL, the verifier's fetch time, catalog size, item id, found, quoted vs live pricing, price match, quoted vs live workload cost, budget, within budget, one row per requirement (expected, actual, passed), the number of live compliant options, the cheapest compliant option, and the delivery call (model, HTTP status, prompt and completion tokens, cost in USD = tokens × live price). Because this sits inside the report, its sha256 is the on-chain `check_results_hash`: anyone can re-fetch the catalog and compare.
+
+**How the workers differ:**
+
+| Worker | Catalog scan | Quoted prices |
+|---|---|---|
+| cheap | Shallow: the LLM sees only the first 12 entries, unfiltered, and picks the first acceptable one | Written by the LLM and not re-checked, so a misread price fails the `catalog` check |
+| adaptive | First 30 entries, pre-filtered by code to compliant ones | Filled from the catalog by code |
+| quality | The whole catalog, pre-filtered to compliant ones with costs computed; the LLM compares value | Filled from the catalog by code |
+
+Prices can move between the worker's read and the verifier's re-fetch. A move beyond the tolerance fails the bounty, which is intended: the verifier only approves what is true at verification time.

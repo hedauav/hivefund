@@ -190,10 +190,58 @@ Every object is stored as `canonicalize(obj)`: sorted keys, no whitespace. bigin
 
 | kind | Shape (TypeScript, `agents/shared/src/types.ts`) | Referenced by |
 |---|---|---|
-| `spec` | `BountySpec { version: 1, title, description, deliverable_schema (JSON Schema), required_sections[], test: {runner:"node", file, timeout_ms} \| null, rubric: {criteria[{id, description, weight}], pass_threshold}, budget_yocto, min_tier, deadline_minutes }` | `Bounty.spec_hash` |
+| `spec` | `BountySpec { version: 1, title, description, deliverable_schema (JSON Schema), required_sections[], test: {runner:"node", file, timeout_ms} \| null, rubric: {criteria[{id, description, weight}], pass_threshold}, budget_yocto, min_tier, deadline_minutes, procurement?: ProcurementSpec }` | `Bounty.spec_hash` |
 | `deliverable` | `Deliverable { bounty_id, round, worker, sections{}, data, code?{filename: source}, generator?: {mode: "llm"\|"template"\|"failed", model} }` | `Bounty.deliverable_hash` |
-| `report` | `VerificationReport { bounty_id, round, worker, spec_hash, deliverable_hash, checks[{id: schema\|sections\|test\|rubric, passed, skipped?, details, duration_ms}], rubric: {mode: llm\|fallback, model, scores[{criterion, score, rationale}], total, threshold} \| null, passed, score, verifier, created_ms }` | `Bounty.check_results_hash` |
+| `report` | `VerificationReport { bounty_id, round, worker, spec_hash, deliverable_hash, checks[{id: schema\|sections\|test\|catalog\|delivery\|rubric, passed, skipped?, details, duration_ms}], rubric: {mode: llm\|fallback, model, scores[{criterion, score, rationale}], total, threshold} \| null, passed, score, verifier, created_ms, procurement?: ProcurementEvidence }` | `Bounty.check_results_hash` |
 | `selection` | `SelectionRationale { bounty_id, round, weights, candidates[{bid_id, worker, price_yocto, eta_ms, reputation, sig_valid, score}], winner_bid_id, rejected[{bid_id, reason}] }` | indexed by bounty and round in `index.jsonl` |
+
+### Procurement shapes
+
+Optional and backward compatible: specs, deliverables and reports without them behave as before. Source of truth: `agents/shared/src/types.ts` and `docs/notes/procurement.md`.
+
+```ts
+ProcurementSpec {
+  catalog: "nearai-models";                 // NEAR AI Cloud GET /v1/models
+  catalog_url: string;                      // https://cloud-api.near.ai/v1/models
+  currency: "USD";
+  product_budget_usd: number;               // max workload cost of the pick
+  workload: { input_mtok: number; output_mtok: number };
+  requirements: {
+    supported_features?: string[];          // e.g. ["tools", "structured_outputs"]
+    min_context_length?: number;
+    input_modalities?: string[];
+    output_modalities?: string[];
+  };
+  price_tolerance_pct: number;              // 0..50, relative, per price component
+  delivery_check: boolean;                  // verifier makes one tiny real call to the pick
+}
+
+// Deliverable for a procurement bounty: sections {summary, comparison, recommendation} (markdown).
+// data, JSON Schema $id "hivefund:procurement-v1":
+{
+  item_id: string;                          // catalog id of the pick
+  source_url: string;                       // catalog_url + "#" + encodeURIComponent(item_id)
+  quoted_pricing: { input: number; output: number };   // USD / 1M tokens, as the worker read it
+  quoted_workload_cost_usd: number;
+  catalog_fetched_at_ms: number;
+  considered_count: number;                 // catalog entries scanned
+  alternatives: { item_id: string; workload_cost_usd: number }[];   // 0..10
+  justification: string;
+}
+
+ProcurementEvidence {                       // VerificationReport.procurement, hash-locked with the report
+  catalog_url; fetched_at_ms; catalog_size; item_id; found;
+  quoted_pricing: {input, output} | null; live_pricing: {input, output} | null; price_match;
+  quoted_workload_cost_usd | null; live_workload_cost_usd | null; budget_usd; within_budget;
+  requirement_checks: { requirement; expected; actual; passed }[];
+  compliant_count; cheapest_compliant: { id; workload_cost_usd } | null;
+  delivery: { model; ok; http_status | null; prompt_tokens | null; completion_tokens | null; cost_usd | null; details } | null;
+}
+```
+
+`CheckId = "schema" | "sections" | "test" | "catalog" | "delivery" | "rubric"`. For procurement specs the order is schema → sections → test (skipped) → catalog → delivery → rubric. `catalog` and `delivery` only appear on procurement reports.
+
+Procurement fixtures live in `bounties/procurement/*.json` and are posted only with `npm run demo -- --bounties procurement`.
 
 Other files in `data/`:
 - `index.jsonl`: one row per stored object, `{hash, kind, bounty_id, round, actor, ts}`.

@@ -105,7 +105,24 @@ When a bounty passes:
 - Adaptive remembers its last 5 outcomes. It raises its margin by 5 points after a win, lowers it by 4 points after a loss, and raises its quality after a failed verification.
 - Every strategy change is logged with its reason.
 
-## 10. Stretch rules (not active unless marked built)
+## 10. Procurement bounties [off-chain checks, on-chain verdict]
+
+A procurement bounty says: "Here is a budget and a list of requirements. Find the best real product under that price."
+
+- **The products are real.** They come from NEAR AI Cloud's public model list, which has real prices in USD per 1M tokens.
+- **Two budgets.** The NEAR reward pays the winning worker. The USD product budget caps what the recommended product would cost for the stated workload.
+- **Workers recommend; nobody buys.** A worker proposes one model, with its quoted prices, the workload cost, the alternatives it considered and why.
+- **The verifier re-checks everything live** before anyone is paid:
+  1. the model exists in the catalog right now;
+  2. the quoted prices match the live prices within the tolerance (1% in the fixture);
+  3. the live cost is within the budget;
+  4. every requirement (features, context length, input and output types) is met;
+  5. one tiny real call to the model works;
+  6. only then, the AI judge scores value for money against the live list of options that qualify.
+- **What the verifier saw is locked in.** Live prices, the fetch time and every check go into the report, whose hash is stored on-chain.
+- Payout, HIVE mint, failure, reopen and cancel follow the normal rules above.
+
+## 11. Stretch rules (not active unless marked built)
 
 - **Inactivity decay (cut #2):** HIVE held by an account that has been inactive for more than 7 days can be decayed by anyone calling `poke_decay`, at 1% per extra day, capped at 50%. It is applied lazily and emits a burn event.
 - **Disputes (cut #1):** a member could stake within a window after a pass to trigger re-verification, and the losing side's stake would be slashed.

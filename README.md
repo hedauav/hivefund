@@ -13,6 +13,12 @@ Communities want to pay for work (code, docs, research), and AI agents can now d
 
 HiveFund puts the market rules in a contract and limits every agent to its role with NEAR access keys. Payment and token supply both depend on a recorded, re-checkable verification.
 
+**Why not just buy an agent directly?** If you are one person spending your own money and you can check the output yourself, you should: use an agent directly. HiveFund is for the cases a direct purchase doesn't cover:
+- **shared money** (a DAO, an open-source fund, a community treasury), where no single person should decide who gets paid;
+- **unknown agents**, where you don't know in advance which one gives the best value, so they compete on price, speed and track record;
+- **pay on verified results**, where nothing is paid unless the work passes recorded checks, and failed work is refunded;
+- **agent-to-agent hiring**, where no human is in the loop to approve each payment.
+
 ## What it is
 
 | Part | Where | What it does |
@@ -25,6 +31,21 @@ HiveFund puts the market rules in a contract and limits every agent to its role 
 | Verifier agent | `agents/verifier` | Runs schema and section checks, then the bounty's test command, then the LLM rubric. Stores the report and calls `verify_bounty` |
 | Off-chain store | `agents/shared/src/node/store.ts` | Content-addressed JSON (`sha256(canonical JSON)`) for specs, deliverables, reports and selection rationales; on-chain hashes point to it |
 | Dashboard | `web/` | Next.js app that reads the live testnet contracts: Swarm Arena replay of on-chain events, bounty and bid boards, verification (with recomputed hashes), HIVE supply trace, worker strategies, treasury, activity. Wallet sign-in can fund the treasury |
+
+## Use case: procurement — best product under a budget
+
+You give a budget and requirements. Agents compete to find the best real product under that price. The verifier checks it before anyone is paid.
+
+The product catalog is **NEAR AI Cloud's live model list** (`GET https://cloud-api.near.ai/v1/models`, public, no key). Each model has a real USD price per 1M input/output tokens, a context length and supported features. A procurement bounty says, for example: "Find the best-value LLM for a NEAR dApp support agent. Workload: 3M input + 1M output tokens. Budget: $3.00. Must support `tools` and `structured_outputs`, at least 200k context, text in and out."
+
+1. The coordinator posts the bounty. The NEAR reward (`budget_yocto`, e.g. 0.03 NEAR) is separate from the product budget (USD, the catalog's currency).
+2. Each worker reads the catalog and proposes one model: catalog id, quoted prices, workload cost, alternatives considered, and a justification. The three workers search the catalog differently (see [`docs/MECHANICS.md`](docs/MECHANICS.md#8-procurement-bounties)).
+3. The verifier **re-fetches the live catalog** and checks that the model exists, the quoted price matches the live price (within 1%), the live workload cost is within budget, and every requirement is met. It then makes **one tiny real call to the chosen model** to prove it is usable, and only then scores value for money with the LLM rubric against the live list of compliant options.
+4. The fetched evidence (live prices, fetch time, each requirement check, the delivery call's tokens and cost) goes into the report, whose hash is stored on-chain. Pay and HIVE mint follow the normal pass rule.
+
+Honest scope: agents **recommend and verify** a product. Nobody checks out or pays the vendor. The catalog is AI models, not physical goods, because it is real, priced and re-checkable without a key.
+
+Run it: `npm run demo -- --bounties procurement` (quickstart step 10).
 
 Market rules in plain language: [`RULES.md`](RULES.md). Contract spec: [`docs/SPEC.md`](docs/SPEC.md). Token and treasury mechanics: [`docs/MECHANICS.md`](docs/MECHANICS.md).
 
@@ -87,6 +108,7 @@ Bounty lifecycle (enforced by the hub): `Open → Bidding → InProgress → Ver
 | Memecoins With Mechanics | No admin mint: `hive-token.mint` panics `ERR_NOT_MINTER` for anyone except the hub | `contracts/hive-token/src/lib.rs` |
 | Memecoins With Mechanics | Every mint is traced on-chain to bounty, recipient, bid units, score and rate (`get_supply_history`) | `SupplyPoint`, `get_supply_history` |
 | Memecoins With Mechanics | Failed mints don't double-count: pending mint plus callback, owner-only `retry_mint` | `on_mint_complete`, `retry_mint` |
+| Agent Economy (supporting fit, not a primary claim) | Procurement bounties: agents compare and recommend paid compute (NEAR AI models) under a USD budget; the verifier re-fetches live prices and makes one real paid call to the pick before payout | `bounties/procurement/`, `agents/shared/src/procurement.ts`, `agents/verifier` <!-- VERIFY after live run --> |
 | Social Money | **Not claimed.** The Sputnik DAO treasury was not integrated (scope change). `fund_treasury` accepts deposits from any account, so a DAO proposal could call it, but this was not built or tested | — |
 
 ## Quickstart (do X → see Y)
@@ -103,7 +125,7 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/release
 
 On **Windows**, install rustup from https://rustup.rs and cargo-near with `irm https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.ps1 | iex`. Without the MSVC C++ build tools, see the Windows note in step 2.
 
-Steps 1, 3–5 and 8 need no keys or NEAR account. Steps 6, 7 and 9 sign testnet transactions.
+Steps 1, 3–5 and 8 need no keys or NEAR account. Steps 6, 7, 9 and 10 sign testnet transactions.
 
 1. **Install.** Run `npm ci` at the repo root (installs exactly the committed lockfile). You see the npm workspaces installed: `agents/*`, `web`, `tests`. An `allow-scripts` warning about esbuild's postinstall is harmless; `tsx` works without it. Optionally run `npm run typecheck` (all TypeScript packages, including `web`) and see no errors.
 2. **Build contracts.**
@@ -134,6 +156,7 @@ Steps 1, 3–5 and 8 need no keys or NEAR account. Steps 6, 7 and 9 sign testnet
 9. **Deploy your own copy (optional).** Run `npx tsx scripts/setup-testnet.ts --dry-run` and then without `--dry-run`. You see the accounts, contracts, roles, function-call keys and treasury created idempotently, followed by an 18-point self-check.
    - It needs `ROOT_ACCOUNT` and `ROOT_PRIVATE_KEY` in `.env.local`.
    - `scripts/topup.ts status|fund|treasury|rekey` manages balances and allowances afterwards.
+10. **Procurement bounty.** Run `npm run demo -- --bounties procurement` (needs `.env.local` as in step 6, including `NEARAI_API_KEY`). You see the procurement bounty posted, three proposals with quoted prices, and a verification report with the live price, budget check, one row per requirement and the delivery call's token cost. The default `npm run demo` does not post procurement bounties. <!-- VERIFY after live run -->
 
 ## Testnet deployment
 
@@ -169,6 +192,7 @@ Budgets are the minimum for testnet and can be raised with `scripts/topup.ts`.
 | Verification failed → worker excluded, bounty reopened (bounty #0, round 0) | <!-- TX:verifyFail --> [5bsVDbGx…](https://testnet.nearblocks.io/txns/5bsVDbGxVyYgoooBCaKCpYGMejvNpsRC8qU35YniFabR) |
 | Second failure → bounty cancelled, 0.1 NEAR refunded to the treasury (bounty #0, round 1) | <!-- TX:verifyFailCancelRefund --> [2ehkaS2X…](https://testnet.nearblocks.io/txns/2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW) |
 | Pass after a reopen (bounty #2, testnet e2e run) | <!-- TX:verifyPassAfterReopen --> [GrmRTiub…](https://testnet.nearblocks.io/txns/GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r) |
+| Procurement bounty passed: live catalog re-check + delivery call → payout + HIVE mint | <!-- TX:procurementPass --> _pending live run_ |
 | Coordinator and verifier keys re-issued with a 0.1 NEAR allowance (`scripts/topup.ts rekey`) | [DzcrzPtj…](https://testnet.nearblocks.io/txns/DzcrzPtjj9Eq9fZjZfWypYaSX3VomLmyFG5XXE5JMEYf) · [2qWf4DJi…](https://testnet.nearblocks.io/txns/2qWf4DJiBSgWMfaWZ3M53xyDdjM3XCEPhF4k6jFz6EeM) |
 | Worker keys (cheap, quality, adaptive, forger) re-issued with a 0.1 NEAR allowance | [JAnKs1WV…](https://testnet.nearblocks.io/txns/JAnKs1WVVNVXSoxGsxpso8cboPGUFnvDm3f95wnXU7g2) · [AtuXqmSx…](https://testnet.nearblocks.io/txns/AtuXqmSxvN2mU6KTNsMmxYWA6evPcKTh6xfVR5J2hNuy) · [9BypHhbi…](https://testnet.nearblocks.io/txns/9BypHhbiBwaF6FatwoAUXLVwq9AWzregZT3KqTZbu6ur) · [6d7jooPS…](https://testnet.nearblocks.io/txns/6d7jooPSgZeLCaRa1oDugQ1PkuVwWkshaKSX6jioe4t) |
 
@@ -258,6 +282,7 @@ NEAR Intents and Chain Signatures are not used.
 - **LLM output is nondeterministic.** The same bounty can produce different deliverables and rubric scores across runs. Reports record the model used and whether the rubric ran in `llm` or `fallback` mode.
 - **Fallback rubric.** If NEAR AI is unavailable, the verifier uses a deterministic keyword-coverage heuristic (see `docs/MECHANICS.md`). The report says so, but the heuristic is much weaker than an LLM review.
 - **Small budgets and allowance headroom.** Before running a function-call-key transaction, NEAR checks the key's allowance against a *pessimistic* cost of the attached gas (about 0.031 NEAR for a 30 TGas call), not the much smaller fee actually burned (about 0.0003 NEAR). A key whose remaining allowance drops below that is refused with "Not enough allowance" even though it has spent very little. This happened to two worker bids in the testnet e2e run when the worker keys had about 0.048 NEAR left. All agent keys now carry 0.1 NEAR. When a key runs low, issue a fresh one with `npx tsx scripts/topup.ts rekey <agent> 0.1` (check with `npx tsx scripts/topup.ts status`). An allowance can't be raised in place, so rekeying uses the root recovery key. The hub pays for its own storage from a 0.2 NEAR buffer.
+- **Procurement is recommend-and-verify only.** Workers pick a model from NEAR AI Cloud's live catalog; nobody checks out with a vendor. Prices can change between the worker's read and the verifier's re-fetch; a change beyond the 1% tolerance fails the bounty. The catalog is AI models only.
 - **Hosted dashboard limits.** On a host without the local `data/` folder, the dashboard needs the committed export of the recorded run in `data/testnet-run/`.
 
 ## License
