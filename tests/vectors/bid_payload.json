@@ -1,0 +1,11 @@
+{
+  "input": {
+    "bounty_id": 7,
+    "contract": "hub.hivefund-demo.testnet",
+    "eta_ms": 3600000,
+    "price_yocto": "500000000000000000000000",
+    "round": 1,
+    "worker": "cheap.hivefund-demo.testnet"
+  },
+  "payload": "{\"bounty_id\":7,\"contract\":\"hub.hivefund-demo.testnet\",\"eta_ms\":3600000,\"price_yocto\":\"500000000000000000000000\",\"round\":1,\"worker\":\"cheap.hivefund-demo.testnet\"}"
+}
