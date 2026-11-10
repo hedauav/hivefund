@@ -18,3 +18,11 @@
 {"hash":"6403df05bf80646f30117d2292599617abcb3fd45b977d7650c873f76b9e679e","kind":"deliverable","bounty_id":2,"round":1,"actor":"adaptive.hivefund-2026.testnet","ts":1794308441046}
 {"hash":"6e884909466b3563b787a3b6044f3358a341e24632a842b2a2f81d8a5a02bafb","kind":"report","bounty_id":2,"round":1,"actor":"verifier.hivefund-2026.testnet","ts":1794308450510}
 {"hash":"42d6a27c15814ffb458519daadb18298a598d877209d43fa85709aceea30b22d","kind":"report","bounty_id":3,"round":0,"actor":"verifier.hivefund-2026.testnet","ts":1794308459769}
+{"hash":"ec64f3bb1d77909341e175e0c33a703eb3813c187ebdfaaead62cd9d66d309dd","kind":"spec","bounty_id":null,"round":null,"actor":"coordinator.hivefund-2026.testnet","ts":1794311906897}
+{"hash":"9da9ca775d4ad5b8d68a1ecf3fc092abb070bb974e3cf05a0a1b7f8b0ed80b3e","kind":"spec","bounty_id":null,"round":null,"actor":"coordinator.hivefund-2026.testnet","ts":1794311909813}
+{"hash":"9b8dacc1dd45b56a88efa9329ccdd4846bcb285094364ad3c0de9b11a6bc0a1b","kind":"selection","bounty_id":4,"round":0,"actor":"coordinator.hivefund-2026.testnet","ts":1794311949161}
+{"hash":"80b0441a2fd9e717fac994adef2728dd2bd838917184fd8e315818c68b001fc2","kind":"selection","bounty_id":5,"round":0,"actor":"coordinator.hivefund-2026.testnet","ts":1794311954615}
+{"hash":"3cecc0863ec6fa35af00175591611572b23b0b50b466f8b04c2eaf5c19ace55a","kind":"deliverable","bounty_id":4,"round":0,"actor":"quality.hivefund-2026.testnet","ts":1794311998151}
+{"hash":"3c7834395f34878b5194d6d68fd877de5f6b82b52f50f8c64a92a67d39de3c57","kind":"deliverable","bounty_id":5,"round":0,"actor":"quality.hivefund-2026.testnet","ts":1794312021995}
+{"hash":"f68b9ebe804ce5b7f9d2ed9291868ca401f15966e8486114c015f4024faa72a8","kind":"report","bounty_id":4,"round":0,"actor":"verifier.hivefund-2026.testnet","ts":1794312037852}
+{"hash":"c4d8f943881dcb4ee8e8d26c6479530e34eef639400e5cf5a9e5dd4c6e8c73c4","kind":"report","bounty_id":5,"round":0,"actor":"verifier.hivefund-2026.testnet","ts":1794312045171}

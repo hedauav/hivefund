@@ -1,6 +1,6 @@
 {
   "source": "testnet",
-  "captured_at": "2026-11-10T11:01:13.497Z",
+  "captured_at": "2026-11-10T12:01:01.966Z",
   "hub": "hub.hivefund-2026.testnet",
   "token": "hive.hivefund-2026.testnet",
   "config": {
@@ -9,16 +9,16 @@
     "verifier": "verifier.hivefund-2026.testnet",
     "hive_token": "hive.hivefund-2026.testnet",
     "mint_rate": "10000000000000000",
-    "total_minted": "1207900000000000000",
+    "total_minted": "1481900000000000000",
     "version": "0.1.0"
   },
   "treasury": {
     "spend_cap": "1000000000000000000000000",
-    "committed_total": "128706800000000000000000",
+    "committed_total": "159654200000000000000000",
     "funded_total": "500000000000000000000000",
-    "available": "371293200000000000000000",
+    "available": "340345800000000000000000",
     "escrowed": "0",
-    "paid_out": "128706800000000000000000",
+    "paid_out": "159654200000000000000000",
     "refunded_total": "100000000000000000000000"
   },
   "bounties": [
@@ -134,6 +134,58 @@
       "created_ms": 1794308204037,
       "updated_ms": 1794308458790,
       "hive_minted": "234900000000000000"
+    },
+    {
+      "id": 4,
+      "title": "Procure the best-value LLM for a NEAR dApp support agent",
+      "spec_hash": "ec64f3bb1d77909341e175e0c33a703eb3813c187ebdfaaead62cd9d66d309dd",
+      "poster": "coordinator.hivefund-2026.testnet",
+      "budget_yocto": "30000000000000000000000",
+      "deadline_ms": 1794315506898,
+      "min_tier": 1,
+      "status": "Completed",
+      "round": 0,
+      "attempts": 0,
+      "bid_ids": [
+        20,
+        22,
+        24,
+        26
+      ],
+      "winner_bid_id": 22,
+      "deliverable_hash": "3cecc0863ec6fa35af00175591611572b23b0b50b466f8b04c2eaf5c19ace55a",
+      "check_results_hash": "f68b9ebe804ce5b7f9d2ed9291868ca401f15966e8486114c015f4024faa72a8",
+      "score": 90,
+      "excluded": [],
+      "created_ms": 1794311905249,
+      "updated_ms": 1794312036977,
+      "hive_minted": "180000000000000000"
+    },
+    {
+      "id": 5,
+      "title": "Plain-language NEAR glossary for new users (10 terms)",
+      "spec_hash": "9da9ca775d4ad5b8d68a1ecf3fc092abb070bb974e3cf05a0a1b7f8b0ed80b3e",
+      "poster": "coordinator.hivefund-2026.testnet",
+      "budget_yocto": "20000000000000000000000",
+      "deadline_ms": 1794319109813,
+      "min_tier": 1,
+      "status": "Completed",
+      "round": 0,
+      "attempts": 0,
+      "bid_ids": [
+        21,
+        23,
+        25,
+        27
+      ],
+      "winner_bid_id": 23,
+      "deliverable_hash": "3c7834395f34878b5194d6d68fd877de5f6b82b52f50f8c64a92a67d39de3c57",
+      "check_results_hash": "c4d8f943881dcb4ee8e8d26c6479530e34eef639400e5cf5a9e5dd4c6e8c73c4",
+      "score": 94,
+      "excluded": [],
+      "created_ms": 1794311907672,
+      "updated_ms": 1794312044544,
+      "hive_minted": "94000000000000000"
     }
   ],
   "bids": {
@@ -424,6 +476,122 @@
         "reject_reason": null,
         "created_ms": 1794308286582
       }
+    ],
+    "4": [
+      {
+        "id": 20,
+        "bounty_id": 4,
+        "round": 0,
+        "worker": "cheap.hivefund-2026.testnet",
+        "tier": 1,
+        "price_yocto": "15750000000000000000000",
+        "eta_ms": 2880000,
+        "signature": "ed25519:3zKdwdi9fX8MSpvxDnFzhXg7VwKXbTKjMMtqcC7HteDnUwPrVnf3Jxy8tZPRcbxhZA1PFcA5Y9788oxnoLkzvedv",
+        "signed_payload": "{\"bounty_id\":4,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":2880000,\"price_yocto\":\"15750000000000000000000\",\"round\":0,\"worker\":\"cheap.hivefund-2026.testnet\"}",
+        "status": "Lost",
+        "reject_reason": null,
+        "created_ms": 1794311913117
+      },
+      {
+        "id": 22,
+        "bounty_id": 4,
+        "round": 0,
+        "worker": "quality.hivefund-2026.testnet",
+        "tier": 3,
+        "price_yocto": "20250000000000000000000",
+        "eta_ms": 1260000,
+        "signature": "ed25519:4VDYyzAwDGQ2Hd34Tu4Rmvr34wxnMADkJ9KST9VaNsPPrFhzsB76ST1uP61ZZZyBZ4y52D22yJcbQVPCky86rwjG",
+        "signed_payload": "{\"bounty_id\":4,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":1260000,\"price_yocto\":\"20250000000000000000000\",\"round\":0,\"worker\":\"quality.hivefund-2026.testnet\"}",
+        "status": "Paid",
+        "reject_reason": null,
+        "created_ms": 1794311920802
+      },
+      {
+        "id": 24,
+        "bounty_id": 4,
+        "round": 0,
+        "worker": "adaptive.hivefund-2026.testnet",
+        "tier": 2,
+        "price_yocto": "18750000000000000000000",
+        "eta_ms": 1800000,
+        "signature": "ed25519:4QB8NzWBW5pekxKUT12feBQsVkghZB54BnSZQwb7dKhwgsYFYw45BBeMh4KQ1FvanqeAWTU7D8vUoLMoH4k3JHdq",
+        "signed_payload": "{\"bounty_id\":4,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":1800000,\"price_yocto\":\"18750000000000000000000\",\"round\":0,\"worker\":\"adaptive.hivefund-2026.testnet\"}",
+        "status": "Lost",
+        "reject_reason": null,
+        "created_ms": 1794311930761
+      },
+      {
+        "id": 26,
+        "bounty_id": 4,
+        "round": 0,
+        "worker": "forger.hivefund-2026.testnet",
+        "tier": 1,
+        "price_yocto": "12000000000000000000000",
+        "eta_ms": 600000,
+        "signature": "ed25519:FBUji4SEsk7gab5H6zF7s91aVJGXigx4paz5m3P2r5b6fVStpqgxYAPXBg5vaJh8wgpzgfPu33tdxpnarAvT91g",
+        "signed_payload": "{\"bounty_id\":4,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":600000,\"price_yocto\":\"12000000000000000000000\",\"round\":0,\"worker\":\"forger.hivefund-2026.testnet\"}",
+        "status": "Rejected",
+        "reject_reason": "invalid bid signature",
+        "created_ms": 1794311936307
+      }
+    ],
+    "5": [
+      {
+        "id": 21,
+        "bounty_id": 5,
+        "round": 0,
+        "worker": "cheap.hivefund-2026.testnet",
+        "tier": 1,
+        "price_yocto": "8320200000000000000000",
+        "eta_ms": 2282112,
+        "signature": "ed25519:5ZjpCbmShQuqKdT1V1WmZBimAvv85VTCXyvDRhEq47VbXGLYxnQv75ZLzS1nCVcQRiHAYTNaY7dXNYTx6ous2cQe",
+        "signed_payload": "{\"bounty_id\":5,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":2282112,\"price_yocto\":\"8320200000000000000000\",\"round\":0,\"worker\":\"cheap.hivefund-2026.testnet\"}",
+        "status": "Lost",
+        "reject_reason": null,
+        "created_ms": 1794311915528
+      },
+      {
+        "id": 23,
+        "bounty_id": 5,
+        "round": 0,
+        "worker": "quality.hivefund-2026.testnet",
+        "tier": 3,
+        "price_yocto": "10697400000000000000000",
+        "eta_ms": 998424,
+        "signature": "ed25519:ERi5y4iCL5WiWVD9dwtxtCe3ALFm1ckc2VcsVuDkv3ZTmRbuAkzjuPQ8uWQhngvDmV5LH4gK4vefqhooG8M1PGp",
+        "signed_payload": "{\"bounty_id\":5,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":998424,\"price_yocto\":\"10697400000000000000000\",\"round\":0,\"worker\":\"quality.hivefund-2026.testnet\"}",
+        "status": "Paid",
+        "reject_reason": null,
+        "created_ms": 1794311923299
+      },
+      {
+        "id": 25,
+        "bounty_id": 5,
+        "round": 0,
+        "worker": "adaptive.hivefund-2026.testnet",
+        "tier": 2,
+        "price_yocto": "9905000000000000000000",
+        "eta_ms": 1426320,
+        "signature": "ed25519:3jH1EzsJiqgFnxUV1tc7V3G9JCjyPcfbfTWGGcoeRC4h92jSZMGB4jW8VCu78MXMGRRykqwnT86gGkcs2hPKLP7v",
+        "signed_payload": "{\"bounty_id\":5,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":1426320,\"price_yocto\":\"9905000000000000000000\",\"round\":0,\"worker\":\"adaptive.hivefund-2026.testnet\"}",
+        "status": "Lost",
+        "reject_reason": null,
+        "created_ms": 1794311933127
+      },
+      {
+        "id": 27,
+        "bounty_id": 5,
+        "round": 0,
+        "worker": "forger.hivefund-2026.testnet",
+        "tier": 1,
+        "price_yocto": "8000000000000000000000",
+        "eta_ms": 600000,
+        "signature": "ed25519:2TZNDrQTASbkTvWxExs5TCY5RGARhXVETeD1YVa4hFaMhi3TWd6syhhhedWCt5H1mZeFid5MH1qPQJZGLMhpMmZ6",
+        "signed_payload": "{\"bounty_id\":5,\"contract\":\"hub.hivefund-2026.testnet\",\"eta_ms\":600000,\"price_yocto\":\"8000000000000000000000\",\"round\":0,\"worker\":\"forger.hivefund-2026.testnet\"}",
+        "status": "Rejected",
+        "reject_reason": "invalid bid signature",
+        "created_ms": 1794311939282
+      }
     ]
   },
   "reputation": [
@@ -444,12 +612,12 @@
       "tier": 3,
       "signing_pk": "ed25519:C7Fsokuj3bwCtDFAHePkkuf1ccwM8iWAqfGZCFuQCbpo",
       "active": true,
-      "completed": 2,
+      "completed": 4,
       "failed": 2,
-      "total_score": 177,
-      "earned_yocto": "55647000000000000000000",
-      "hive_earned": "477900000000000000",
-      "reputation": 7
+      "total_score": 361,
+      "earned_yocto": "86594400000000000000000",
+      "hive_earned": "751900000000000000",
+      "reputation": 46
     },
     {
       "account_id": "adaptive.hivefund-2026.testnet",
@@ -1169,6 +1337,248 @@
       "bid_id": null,
       "amount": "234900000000000000",
       "detail": "minted 234900000000000000 HIVE-yocto to quality.hivefund-2026.testnet = 27 units x 87 / 100 x rate"
+    },
+    {
+      "id": 63,
+      "ts_ms": 1794311905249,
+      "block_height": 277064420,
+      "actor": "coordinator.hivefund-2026.testnet",
+      "kind": "BountyPosted",
+      "bounty_id": 4,
+      "bid_id": null,
+      "amount": "30000000000000000000000",
+      "detail": "bounty #4 posted: Procure the best-value LLM for a NEAR dApp support agent"
+    },
+    {
+      "id": 64,
+      "ts_ms": 1794311907672,
+      "block_height": 277064424,
+      "actor": "coordinator.hivefund-2026.testnet",
+      "kind": "BountyPosted",
+      "bounty_id": 5,
+      "bid_id": null,
+      "amount": "20000000000000000000000",
+      "detail": "bounty #5 posted: Plain-language NEAR glossary for new users (10 terms)"
+    },
+    {
+      "id": 65,
+      "ts_ms": 1794311913117,
+      "block_height": 277064433,
+      "actor": "cheap.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 4,
+      "bid_id": 20,
+      "amount": "15750000000000000000000",
+      "detail": "cheap.hivefund-2026.testnet bid 15750000000000000000000 yocto, eta 2880000 ms"
+    },
+    {
+      "id": 66,
+      "ts_ms": 1794311915528,
+      "block_height": 277064437,
+      "actor": "cheap.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 5,
+      "bid_id": 21,
+      "amount": "8320200000000000000000",
+      "detail": "cheap.hivefund-2026.testnet bid 8320200000000000000000 yocto, eta 2282112 ms"
+    },
+    {
+      "id": 67,
+      "ts_ms": 1794311920802,
+      "block_height": 277064446,
+      "actor": "quality.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 4,
+      "bid_id": 22,
+      "amount": "20250000000000000000000",
+      "detail": "quality.hivefund-2026.testnet bid 20250000000000000000000 yocto, eta 1260000 ms"
+    },
+    {
+      "id": 68,
+      "ts_ms": 1794311923299,
+      "block_height": 277064450,
+      "actor": "quality.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 5,
+      "bid_id": 23,
+      "amount": "10697400000000000000000",
+      "detail": "quality.hivefund-2026.testnet bid 10697400000000000000000 yocto, eta 998424 ms"
+    },
+    {
+      "id": 69,
+      "ts_ms": 1794311930761,
+      "block_height": 277064463,
+      "actor": "adaptive.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 4,
+      "bid_id": 24,
+      "amount": "18750000000000000000000",
+      "detail": "adaptive.hivefund-2026.testnet bid 18750000000000000000000 yocto, eta 1800000 ms"
+    },
+    {
+      "id": 70,
+      "ts_ms": 1794311933127,
+      "block_height": 277064467,
+      "actor": "adaptive.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 5,
+      "bid_id": 25,
+      "amount": "9905000000000000000000",
+      "detail": "adaptive.hivefund-2026.testnet bid 9905000000000000000000 yocto, eta 1426320 ms"
+    },
+    {
+      "id": 71,
+      "ts_ms": 1794311936307,
+      "block_height": 277064472,
+      "actor": "forger.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 4,
+      "bid_id": 26,
+      "amount": "12000000000000000000000",
+      "detail": "forger.hivefund-2026.testnet bid 12000000000000000000000 yocto, eta 600000 ms"
+    },
+    {
+      "id": 72,
+      "ts_ms": 1794311939282,
+      "block_height": 277064477,
+      "actor": "forger.hivefund-2026.testnet",
+      "kind": "BidPlaced",
+      "bounty_id": 5,
+      "bid_id": 27,
+      "amount": "8000000000000000000000",
+      "detail": "forger.hivefund-2026.testnet bid 8000000000000000000000 yocto, eta 600000 ms"
+    },
+    {
+      "id": 73,
+      "ts_ms": 1794311944873,
+      "block_height": 277064486,
+      "actor": "coordinator.hivefund-2026.testnet",
+      "kind": "BidRejected",
+      "bounty_id": 4,
+      "bid_id": 26,
+      "amount": null,
+      "detail": "bid #26 by forger.hivefund-2026.testnet rejected by coordinator: invalid bid signature"
+    },
+    {
+      "id": 74,
+      "ts_ms": 1794311947210,
+      "block_height": 277064490,
+      "actor": "coordinator.hivefund-2026.testnet",
+      "kind": "WinnerSelected",
+      "bounty_id": 4,
+      "bid_id": 22,
+      "amount": "20250000000000000000000",
+      "detail": "bid #22 by quality.hivefund-2026.testnet selected"
+    },
+    {
+      "id": 75,
+      "ts_ms": 1794311950166,
+      "block_height": 277064495,
+      "actor": "coordinator.hivefund-2026.testnet",
+      "kind": "BidRejected",
+      "bounty_id": 5,
+      "bid_id": 27,
+      "amount": null,
+      "detail": "bid #27 by forger.hivefund-2026.testnet rejected by coordinator: invalid bid signature"
+    },
+    {
+      "id": 76,
+      "ts_ms": 1794311953243,
+      "block_height": 277064500,
+      "actor": "coordinator.hivefund-2026.testnet",
+      "kind": "WinnerSelected",
+      "bounty_id": 5,
+      "bid_id": 23,
+      "amount": "10697400000000000000000",
+      "detail": "bid #23 by quality.hivefund-2026.testnet selected"
+    },
+    {
+      "id": 77,
+      "ts_ms": 1794311996280,
+      "block_height": 277064575,
+      "actor": "quality.hivefund-2026.testnet",
+      "kind": "WorkSubmitted",
+      "bounty_id": 4,
+      "bid_id": 22,
+      "amount": null,
+      "detail": "quality.hivefund-2026.testnet submitted deliverable 3cecc0863ec6fa35af00175591611572b23b0b50b466f8b04c2eaf5c19ace55a"
+    },
+    {
+      "id": 78,
+      "ts_ms": 1794312020024,
+      "block_height": 277064616,
+      "actor": "quality.hivefund-2026.testnet",
+      "kind": "WorkSubmitted",
+      "bounty_id": 5,
+      "bid_id": 23,
+      "amount": null,
+      "detail": "quality.hivefund-2026.testnet submitted deliverable 3c7834395f34878b5194d6d68fd877de5f6b82b52f50f8c64a92a67d39de3c57"
+    },
+    {
+      "id": 79,
+      "ts_ms": 1794312035907,
+      "block_height": 277064645,
+      "actor": "verifier.hivefund-2026.testnet",
+      "kind": "Payout",
+      "bounty_id": 4,
+      "bid_id": 22,
+      "amount": "20250000000000000000000",
+      "detail": "paid 20250000000000000000000 yocto to quality.hivefund-2026.testnet"
+    },
+    {
+      "id": 80,
+      "ts_ms": 1794312035907,
+      "block_height": 277064645,
+      "actor": "verifier.hivefund-2026.testnet",
+      "kind": "VerificationPassed",
+      "bounty_id": 4,
+      "bid_id": 22,
+      "amount": null,
+      "detail": "score 90 checks f68b9ebe804ce5b7f9d2ed9291868ca401f15966e8486114c015f4024faa72a8"
+    },
+    {
+      "id": 81,
+      "ts_ms": 1794312036977,
+      "block_height": 277064647,
+      "actor": "hub.hivefund-2026.testnet",
+      "kind": "Mint",
+      "bounty_id": 4,
+      "bid_id": null,
+      "amount": "180000000000000000",
+      "detail": "minted 180000000000000000 HIVE-yocto to quality.hivefund-2026.testnet = 20 units x 90 / 100 x rate"
+    },
+    {
+      "id": 82,
+      "ts_ms": 1794312043256,
+      "block_height": 277064658,
+      "actor": "verifier.hivefund-2026.testnet",
+      "kind": "Payout",
+      "bounty_id": 5,
+      "bid_id": 23,
+      "amount": "10697400000000000000000",
+      "detail": "paid 10697400000000000000000 yocto to quality.hivefund-2026.testnet"
+    },
+    {
+      "id": 83,
+      "ts_ms": 1794312043256,
+      "block_height": 277064658,
+      "actor": "verifier.hivefund-2026.testnet",
+      "kind": "VerificationPassed",
+      "bounty_id": 5,
+      "bid_id": 23,
+      "amount": null,
+      "detail": "score 94 checks c4d8f943881dcb4ee8e8d26c6479530e34eef639400e5cf5a9e5dd4c6e8c73c4"
+    },
+    {
+      "id": 84,
+      "ts_ms": 1794312044544,
+      "block_height": 277064660,
+      "actor": "hub.hivefund-2026.testnet",
+      "kind": "Mint",
+      "bounty_id": 5,
+      "bid_id": null,
+      "amount": "94000000000000000",
+      "detail": "minted 94000000000000000 HIVE-yocto to quality.hivefund-2026.testnet = 10 units x 94 / 100 x rate"
     }
   ],
   "supply_history": [
@@ -1207,14 +1617,38 @@
       "mint_rate": "10000000000000000",
       "amount": "234900000000000000",
       "total_minted_after": "1207900000000000000"
+    },
+    {
+      "id": 3,
+      "ts_ms": 1794312036977,
+      "block_height": 277064647,
+      "bounty_id": 4,
+      "recipient": "quality.hivefund-2026.testnet",
+      "bid_units": "20",
+      "score": 90,
+      "mint_rate": "10000000000000000",
+      "amount": "180000000000000000",
+      "total_minted_after": "1387900000000000000"
+    },
+    {
+      "id": 4,
+      "ts_ms": 1794312044544,
+      "block_height": 277064660,
+      "bounty_id": 5,
+      "recipient": "quality.hivefund-2026.testnet",
+      "bid_units": "10",
+      "score": 94,
+      "mint_rate": "10000000000000000",
+      "amount": "94000000000000000",
+      "total_minted_after": "1481900000000000000"
     }
   ],
   "pending_mints": [],
   "token_state": {
-    "ft_total_supply": "1207900000000000000",
+    "ft_total_supply": "1481900000000000000",
     "balances": {
       "cheap.hivefund-2026.testnet": "0",
-      "quality.hivefund-2026.testnet": "477900000000000000",
+      "quality.hivefund-2026.testnet": "751900000000000000",
       "adaptive.hivefund-2026.testnet": "730000000000000000",
       "forger.hivefund-2026.testnet": "0"
     }

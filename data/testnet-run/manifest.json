@@ -3,20 +3,23 @@
   "network": "testnet",
   "hub": "hub.hivefund-2026.testnet",
   "token": "hive.hivefund-2026.testnet",
-  "captured_at": "2026-11-10T11:01:13.497Z",
+  "captured_at": "2026-11-10T12:01:52.663Z",
   "runs": [
     "npm run demo (bounties #0, #1)",
-    "npm run test:testnet (bounties #2, #3)"
+    "npm run test:testnet (bounties #2, #3)",
+    "npm run demo -- --bounties procurement,starter (bounties #4 procurement, #5 starter glossary)"
   ],
-  "offchain_objects": 20,
-  "index_entries": 20,
-  "tx_entries": 54,
+  "offchain_objects": 28,
+  "index_entries": 28,
+  "tx_entries": 72,
   "tx_failed": 8,
   "bounties": [
     0,
     1,
     2,
-    3
+    3,
+    4,
+    5
   ],
   "files": {
     "offchain/<sha256>.json": "content-addressed objects (spec, deliverable, report, selection); file bytes = canonical JSON, sha256(bytes) = file name = the on-chain hash",

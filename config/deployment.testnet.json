@@ -82,7 +82,12 @@
     "forgedBidRejected": "FSFeuRkABATYE54XPTWr1xkigA3oSZyvTBqHjhi3XuH4",
     "verifyFail": "5bsVDbGxVyYgoooBCaKCpYGMejvNpsRC8qU35YniFabR",
     "verifyFailCancelRefund": "2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW",
-    "verifyPassAfterReopen": "GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r"
+    "verifyPassAfterReopen": "GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r",
+    "procurementPosted": "9rBMCvS64X8eYCuDP8gvGXeGgXim1crzmXQN7xWt4ABU",
+    "procurementSelect": "Av6UpsHCZYVh9NkwbA592urW74WB2m2tdFZ1HGaGt9fK",
+    "procurementVerifyPass": "7hwNRWpJDr5zcUcYyd3vzcuzUsi44G58yfGdFmacvwG5",
+    "starterSelectColdStart": "HUwnB5iBUKUArHTop7KUR7t8WzC5cnvrBJkMsqAiAJyq",
+    "starterVerifyPass": "5QpZPeTyWjoc9KAm2NpQNNcUddVdTNv8ChCL1strTWWf"
   },
   "selfCheck": {
     "at": "2026-11-10T10:39:31.740Z",
