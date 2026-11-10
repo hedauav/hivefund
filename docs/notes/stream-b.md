@@ -66,6 +66,11 @@ data/
 - it uses the minimal budgets (treasury 0.5 NEAR funded, 1 NEAR cap, bounties 0.1 / 0.05 NEAR, mint_rate 1e16);
 - the web app must label it as sample data whenever it renders it.
 
+`data/testnet-run/` is the **committed export of the recorded testnet run** (real, not sample):
+- same layout as above, plus `manifest.json` (label, network, hub, token, counts) and a `README.md`;
+- objects were copied from the run's `data/` and every `offchain/<sha256>.json` re-hashed on export; all `spec_hash` / `deliverable_hash` / `check_results_hash` values of bounties #0–#3 resolve to a file there;
+- the web app should use it as the off-chain source when `HIVEFUND_DATA_DIR`/local `data/` is absent (hosted deploys, fresh clones) and keep reading chain views live; it must not show the SAMPLE banner for it.
+
 ## Agent contract (Stream C packages as built)
 
 - **Workers:** `createCheapWorker` / `createQualityWorker` / `createAdaptiveWorker` take `{accountId, contract, bidKey, now, log, llm?}` and return a `Worker` whose method is `tick(hub, store)`.

@@ -1,0 +1,28 @@
+{
+  "label": "RECORDED TESTNET RUN — real transactions on NEAR testnet, not sample data",
+  "network": "testnet",
+  "hub": "hub.hivefund-2026.testnet",
+  "token": "hive.hivefund-2026.testnet",
+  "captured_at": "2026-11-10T11:01:13.497Z",
+  "runs": [
+    "npm run demo (bounties #0, #1)",
+    "npm run test:testnet (bounties #2, #3)"
+  ],
+  "offchain_objects": 20,
+  "index_entries": 20,
+  "tx_entries": 54,
+  "tx_failed": 8,
+  "bounties": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "files": {
+    "offchain/<sha256>.json": "content-addressed objects (spec, deliverable, report, selection); file bytes = canonical JSON, sha256(bytes) = file name = the on-chain hash",
+    "index.jsonl": "one line per stored object: {hash, kind, bounty_id, round, actor, ts}",
+    "strategy/<worker>.jsonl": "adaptive worker strategy changes: {ts_ms, worker, bounty_id, old_margin, new_margin, reason, window}",
+    "tx.jsonl": "every agent transaction: {ts, actor, contract, method, args, txHash, ok, explorer}",
+    "chain-state.json": "snapshot of all hub/token views taken after the run (same shape as data/sample/chain-state.json)"
+  }
+}
