@@ -337,7 +337,7 @@ async function expectAccessKeyRejection(name: string, signerId: string, secret: 
     return { name, ok: false, detail: `UNEXPECTED: tx landed (${r.txHash}) ok=${r.ok}` };
   } catch (e) {
     const m = errMsg(e);
-    const ok = /MethodNameMismatch|ReceiverMismatch|AccessKey|not allowed|permission/i.test(m);
+    const ok = /MethodNameMismatch|ReceiverMismatch|AccessKey|Access key does not allow|not allowed|permission/i.test(m);
     return { name, ok, detail: ok ? `rejected by access key: ${m.slice(0, 140)}` : `unexpected error: ${m.slice(0, 200)}` };
   }
 }

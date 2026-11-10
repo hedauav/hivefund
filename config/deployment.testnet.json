@@ -1,9 +1,10 @@
 {
   "network": "testnet",
-  "status": "not-deployed",
-  "note": "Account ids are derived from ROOT_ACCOUNT. scripts/setup-testnet.ts overwrites this file with real tx hashes after the approved testnet run.",
+  "status": "deployed",
   "rpcUrl": "https://test.rpc.fastnear.com",
-  "fallbackRpcUrls": ["https://near-testnet.drpc.org"],
+  "fallbackRpcUrls": [
+    "https://near-testnet.drpc.org"
+  ],
   "hub": "hub.hivefund-2026.testnet",
   "token": "hive.hivefund-2026.testnet",
   "owner": "hivefund-2026.testnet",
@@ -16,7 +17,161 @@
     "forger": "forger.hivefund-2026.testnet"
   },
   "explorer": "https://testnet.nearblocks.io",
-  "deployedAt": "",
-  "txs": {},
-  "sampleTxs": { "deploy": "", "verifyPass": "" }
+  "deployedAt": "2026-11-10T10:39:31.740Z",
+  "contracts": {
+    "hub": {
+      "wasmBytes": 231684,
+      "sha256": "7dff3bc16ad9f422905aa007ca3a897aeb31d23dd04f02f46f8dde9666d9f219",
+      "codeHash": "9Uqh8itkDWWft2E2YkhaUaLcwZMi2zP6DoBk7XTjbpX2"
+    },
+    "token": {
+      "wasmBytes": 160460,
+      "sha256": "6d22536c25e374e0f4b5a99d59d78d4e54ad9ab22dbd9e5eda377b0293727c13",
+      "codeHash": "8M1oECpkfCSy4yjbhtUiMgzf3SKy8pRVRvEBdjC6c47c"
+    }
+  },
+  "params": {
+    "treasuryCapYocto": "1000000000000000000000000",
+    "treasuryFundYocto": "500000000000000000000000",
+    "mintRate": "10000000000000000",
+    "agentFundYocto": "100000000000000000000000",
+    "fcAllowanceYocto": "50000000000000000000000",
+    "agentRecoveryKey": "root"
+  },
+  "agentMethods": {
+    "coordinator": [
+      "post_bounty",
+      "select_winner",
+      "reject_bid",
+      "cancel_bounty"
+    ],
+    "verifier": [
+      "verify_bounty"
+    ],
+    "worker": [
+      "place_bid",
+      "submit_work"
+    ]
+  },
+  "txs": {
+    "createHub": "511vy2nFfMv3pLUHgBmxGnqTTBtpfoY1wUGbH5zF8Q8m",
+    "createToken": "7DHJGBhYv5vaN3Hi5NSWsVgNr9NFRkb6aZnHToRgSbNb",
+    "deployToken": "Cc515FQxiM277mvQr1UfuJe6hH6RaYpji1JS45gpzPpb",
+    "deployHub": "86VrxGgXNYdw4Scgk77dWh1hKLKasAaaPuN2dybNBHpc",
+    "create_coordinator": "YTH44mcepZf9J2tQTBpdug1CmgHC3Kks8UtgDqQkxF8",
+    "create_verifier": "4AV3sNaBLx6ZqbrqfS1cD7BCTZKa6C3xZutuJKwjnXvM",
+    "create_cheap": "6U6j9GqSneCxVN2MsgZkvLBYRTDBBn1Q3ZzKSKgFB71Y",
+    "create_quality": "5NzWZW8MdzWEtVuVogRpgSeZRtVQu1jrJD2dieLLv9Ro",
+    "create_adaptive": "9Db1w9QuD6DxXNJdZkYeN5LWJKsNAc25GWVArX9Q6RMf",
+    "create_forger": "Ddc6zWcjFr31iXCWaMyBcb5B45nvqQ7qY5P1y4cySab1",
+    "setCoordinator": "GDtcuQExLmrnE3GP7L3jDdN6LzzWQy2eQ8ZP98fjCZXy",
+    "setVerifier": "FCrTTbHqkGf7zd67X3UQwP8XLRT2Exowguek6d6Mxrqc",
+    "addWorker_cheap": "HiR67FGJgxAo2fNwRFMkg1JWpYEP8u6xLDJ2muucqjjd",
+    "addWorker_quality": "8stoiAAfRL5BMmhnnjHJpEANamYsEAVqfVgEdhmXe3yP",
+    "addWorker_adaptive": "GHC4JWJzxtAojakVcJrfzKatpz3fCcLxs2oXdQVzYdXg",
+    "addWorker_forger": "4BqMaS8QhRucaMUn4qhUee4t1yyfzC8uP5W3nzFFTcsM",
+    "fundTreasury": "9VtuvA17sKd65g94p1SZyx54SKKG42FtdkBTFhi3wt2T",
+    "selfCheckNotVerifier": "7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9"
+  },
+  "sampleTxs": {
+    "deploy": "86VrxGgXNYdw4Scgk77dWh1hKLKasAaaPuN2dybNBHpc",
+    "verifyPass": "",
+    "selfCheckNotVerifier": "7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9"
+  },
+  "selfCheck": {
+    "at": "2026-11-10T10:39:31.740Z",
+    "passed": true,
+    "results": [
+      {
+        "name": "hub get_config roles",
+        "ok": true,
+        "detail": "owner hivefund-2026.testnet, coordinator coordinator.hivefund-2026.testnet, verifier verifier.hivefund-2026.testnet, token hive.hivefund-2026.testnet, mint_rate 10000000000000000"
+      },
+      {
+        "name": "token minter is hub (no admin mint)",
+        "ok": true,
+        "detail": "minter hub.hivefund-2026.testnet"
+      },
+      {
+        "name": "token metadata",
+        "ok": true,
+        "detail": "HIVE, 18 decimals"
+      },
+      {
+        "name": "worker cheap registered",
+        "ok": true,
+        "detail": "tier 1, pk ed25519:9ijG4Ljp8X9E…"
+      },
+      {
+        "name": "worker quality registered",
+        "ok": true,
+        "detail": "tier 3, pk ed25519:C7Fsokuj3bwC…"
+      },
+      {
+        "name": "worker adaptive registered",
+        "ok": true,
+        "detail": "tier 2, pk ed25519:7UfoMMoPrs2H…"
+      },
+      {
+        "name": "worker forger registered",
+        "ok": true,
+        "detail": "tier 1, pk ed25519:Bjmo952pRePc…"
+      },
+      {
+        "name": "treasury funded",
+        "ok": true,
+        "detail": "funded 0.5000 NEAR, available 0.5000 NEAR, cap 1.0000 NEAR"
+      },
+      {
+        "name": "coordinator FC key scope",
+        "ok": true,
+        "detail": "-> hub.hivefund-2026.testnet [post_bounty, select_winner, reject_bid, cancel_bounty] allowance 0.0500 NEAR"
+      },
+      {
+        "name": "verifier FC key scope",
+        "ok": true,
+        "detail": "-> hub.hivefund-2026.testnet [verify_bounty] allowance 0.0500 NEAR"
+      },
+      {
+        "name": "cheap FC key scope",
+        "ok": true,
+        "detail": "-> hub.hivefund-2026.testnet [place_bid, submit_work] allowance 0.0500 NEAR"
+      },
+      {
+        "name": "quality FC key scope",
+        "ok": true,
+        "detail": "-> hub.hivefund-2026.testnet [place_bid, submit_work] allowance 0.0500 NEAR"
+      },
+      {
+        "name": "adaptive FC key scope",
+        "ok": true,
+        "detail": "-> hub.hivefund-2026.testnet [place_bid, submit_work] allowance 0.0500 NEAR"
+      },
+      {
+        "name": "forger FC key scope",
+        "ok": true,
+        "detail": "-> hub.hivefund-2026.testnet [place_bid, submit_work] allowance 0.0500 NEAR"
+      },
+      {
+        "name": "coordinator key cannot call verify_bounty",
+        "ok": true,
+        "detail": "rejected by access key: Access key does not allow method verify_bounty"
+      },
+      {
+        "name": "verifier key cannot call select_winner",
+        "ok": true,
+        "detail": "rejected by access key: Access key does not allow method select_winner"
+      },
+      {
+        "name": "worker key cannot call select_winner",
+        "ok": true,
+        "detail": "rejected by access key: Access key does not allow method select_winner"
+      },
+      {
+        "name": "owner (non-verifier) verify_bounty -> ERR_NOT_VERIFIER",
+        "ok": true,
+        "detail": "tx https://testnet.nearblocks.io/txns/7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9 panicked ERR_NOT_VERIFIER"
+      }
+    ]
+  }
 }
