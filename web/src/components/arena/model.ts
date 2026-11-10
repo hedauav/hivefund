@@ -1,6 +1,7 @@
 // Swarm arena: a pure reducer over real market events (get_activity_log + strategy logs).
 // The arena never invents events; every frame is the result of one logged action.
 import { formatHive, formatNear, type ActivityEntry, type StrategyChange } from "@hivefund/shared";
+import { humanizeDetail } from "@/lib/format";
 
 export type Role = "cheap" | "quality" | "adaptive" | "forger" | "coordinator" | "verifier";
 export const ROLES: Role[] = ["coordinator", "verifier", "cheap", "quality", "adaptive", "forger"];
@@ -186,8 +187,8 @@ export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string
         go(bidRole, BENCH);
         s.fx.push({ k: ok ? "check" : "cross" });
         s.caption = ok
-          ? `The verifier passes the work on ${bLabel}: ${e.detail}.`
-          : `The verifier fails the work on ${bLabel}: ${e.detail}.`;
+          ? `The verifier passes the work on ${bLabel}: ${humanizeDetail(e.detail)}.`
+          : `The verifier fails the work on ${bLabel}: ${humanizeDetail(e.detail)}.`;
         break;
       }
       case "Payout":
@@ -221,7 +222,7 @@ export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string
         s.caption = `The treasury receives ${near(e.amount)}.`;
         break;
       default:
-        s.caption = e.detail;
+        s.caption = humanizeDetail(e.detail);
     }
   }
   for (const r of ROLES) {

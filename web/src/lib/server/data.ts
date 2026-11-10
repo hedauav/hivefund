@@ -1,13 +1,29 @@
 // Server-only file access for API routes: deployment config, the off-chain
 // content-addressed store, strategy logs and the tx log.
 //
-// Live mode (a deployment exists) reads the real agent output:
-//   $HIVEFUND_DATA_DIR (default <repo>/data), then web/public/offchain (exported snapshot).
-// Sample mode (no deployment) reads <repo>/data/sample, then web/fixtures.
+// Live mode (a deployment exists): chain views always come from RPC in the browser. Off-chain
+// records are merged by hash from, in order:
+//   1. $HIVEFUND_DATA_DIR (default <repo>/data): live agent output on this machine
+//   2. the recorded testnet run (data/testnet-run/, bundled into src/generated/recorded-run.json
+//      at prebuild so it is readable on any host), used only when it belongs to the same hub
+//   3. web/public/offchain (optional exported snapshot)
+// Sample mode (no deployment anywhere) reads <repo>/data/sample, then web/fixtures.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { canonicalize, hashJson, isHash, type DeploymentConfig, type StrategyChange } from "@hivefund/shared";
 import type { ChainSnapshot, OffchainIndexEntry, TxLogEntry, WebConfig } from "../snapshot";
+import recordedRun from "@/generated/recorded-run.json";
+
+interface RecordedRun {
+  available: boolean;
+  manifest: { label: string; hub: string; token: string; captured_at: string; network: string } | null;
+  deployment: DeploymentConfig | null;
+  index: (OffchainIndexEntry & { ts?: number })[];
+  strategy: Record<string, StrategyChange[]>;
+  tx: TxLogEntry[];
+  offchain: Record<string, unknown>;
+}
+const RECORDED = recordedRun as unknown as RecordedRun;
 
 // Runtime-resolved paths: excluded from Turbopack's static file tracing
 // (next.config.ts lists the data folders explicitly via outputFileTracingIncludes).
@@ -46,7 +62,10 @@ function readJsonl<T>(file: string): T[] {
 export function loadDeployment(): DeploymentConfig | null {
   const network = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
   const dep = readJson<DeploymentConfig>(p(REPO_ROOT, "config", `deployment.${network}.json`));
-  return dep && dep.hub ? dep : null;
+  if (dep?.hub) return dep;
+  // Hosted builds: the deployment config is bundled with the recorded run.
+  const bundled = RECORDED.deployment;
+  return bundled?.hub && bundled.network === network ? bundled : null;
 }
 
 export function getWebConfig(): WebConfig {
@@ -62,6 +81,7 @@ export function getWebConfig(): WebConfig {
     (network === "mainnet" ? "https://free.rpc.fastnear.com" : "https://test.rpc.fastnear.com");
   const explorer = dep?.explorer || (network === "mainnet" ? "https://nearblocks.io" : "https://testnet.nearblocks.io");
   const mode = hub ? "live" : "mock";
+  const rec = mode === "live" ? recordedFor(hub) : null;
   return {
     mode,
     network,
@@ -70,8 +90,15 @@ export function getWebConfig(): WebConfig {
     token,
     explorer,
     dataSource: mode === "live" ? `testnet contract ${hub}` : sampleDir().label,
+    recorded: rec ? { label: "recorded testnet run", captured_at: rec.manifest!.captured_at, objects: Object.keys(rec.offchain).length, txs: rec.tx.length } : null,
   };
 }
+
+/** The bundled recorded run, only if it was recorded against this hub. */
+function recordedFor(hub: string | null): RecordedRun | null {
+  return RECORDED.available && RECORDED.manifest?.hub === hub ? RECORDED : null;
+}
+const recorded = () => (getWebConfig().mode === "live" ? recordedFor(getWebConfig().hub) : null);
 
 /** Directories searched for off-chain data, in priority order. */
 export function dataDirs(): string[] {
@@ -139,19 +166,26 @@ export function readOffchain(hash: string): OffchainLookup {
       return { status: "ok", hash, object: obj, verified: true, file };
     }
   }
+  const rec = recorded();
+  if (rec && hash in rec.offchain) {
+    const obj = rec.offchain[hash];
+    const recomputed = hashJson(obj);
+    if (recomputed !== hash) return { status: "mismatch", hash, recomputed, file: "recorded testnet run" };
+    return { status: "ok", hash, object: obj, verified: true, file: "recorded testnet run" };
+  }
   return { status: "missing", hash };
 }
 
 export function readIndex(): OffchainIndexEntry[] {
   const seen = new Set<string>();
   const out: OffchainIndexEntry[] = [];
-  for (const dir of dataDirs()) {
-    for (const e of readJsonl<OffchainIndexEntry>(p(dir, "index.jsonl"))) {
-      if (!e?.hash || seen.has(e.hash)) continue;
-      seen.add(e.hash);
-      out.push(e);
-    }
-  }
+  const add = (e: OffchainIndexEntry & { ts?: number }) => {
+    if (!e?.hash || seen.has(e.hash)) return;
+    seen.add(e.hash);
+    out.push({ ...e, ts_ms: e.ts_ms ?? e.ts, bounty_id: e.bounty_id ?? undefined, round: e.round ?? undefined });
+  };
+  for (const dir of dataDirs()) readJsonl<OffchainIndexEntry>(p(dir, "index.jsonl")).forEach(add);
+  recorded()?.index.forEach(add);
   return out;
 }
 
@@ -164,19 +198,34 @@ export function readStrategy(worker?: string): Record<string, StrategyChange[]> 
       if (!f.endsWith(".jsonl")) continue;
       const name = f.slice(0, -".jsonl".length);
       if (worker && name !== worker) continue;
-      if (out[name]) continue;
-      out[name] = readJsonl<StrategyChange>(p(sdir, f)).sort((a, b) => a.ts_ms - b.ts_ms);
+      out[name] = mergeStrategy(out[name], readJsonl<StrategyChange>(p(sdir, f)));
     }
+  }
+  for (const [name, list] of Object.entries(recorded()?.strategy ?? {})) {
+    if (worker && name !== worker) continue;
+    out[name] = mergeStrategy(out[name], list);
   }
   return out;
 }
 
+function mergeStrategy(a: StrategyChange[] = [], b: StrategyChange[]): StrategyChange[] {
+  const key = (c: StrategyChange) => `${c.ts_ms}|${c.bounty_id}|${c.old_margin}|${c.new_margin}`;
+  const m = new Map(a.map((c) => [key(c), c]));
+  for (const c of b) if (!m.has(key(c))) m.set(key(c), c);
+  return [...m.values()].sort((x, y) => x.ts_ms - y.ts_ms);
+}
+
 export function readTxLog(): TxLogEntry[] {
-  for (const dir of dataDirs()) {
-    const rows = readJsonl<TxLogEntry>(p(dir, "tx.jsonl"));
-    if (rows.length) return rows;
-  }
-  return [];
+  const seen = new Set<string>();
+  const out: TxLogEntry[] = [];
+  const add = (r: TxLogEntry) => {
+    if (!r?.txHash || seen.has(r.txHash)) return;
+    seen.add(r.txHash);
+    out.push(r);
+  };
+  for (const dir of dataDirs()) readJsonl<TxLogEntry>(p(dir, "tx.jsonl")).forEach(add);
+  recorded()?.tx.forEach(add);
+  return out.sort((a, b) => a.ts - b.ts);
 }
 
 /** Re-serialise canonically (used to show exactly the hashed bytes). */

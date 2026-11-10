@@ -7,7 +7,11 @@ type Args = Record<string, unknown> | undefined;
 const arg = (e: TxLogEntry, k: string) => (e.args as Args)?.[k];
 
 export class TxIndex {
-  constructor(private rows: TxLogEntry[]) {}
+  private rows: TxLogEntry[];
+  constructor(rows: TxLogEntry[]) {
+    // Failed transactions are real but did not change state; link the successful one.
+    this.rows = rows.filter((r) => r.ok !== false);
+  }
 
   get size() {
     return this.rows.length;

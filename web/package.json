@@ -8,11 +8,13 @@
   },
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsx scripts/bundle-recorded.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p .",
-    "fixture": "tsx scripts/make-fixture.ts"
+    "fixture": "tsx scripts/make-fixture.ts",
+    "bundle:recorded": "tsx scripts/bundle-recorded.ts"
   },
   "dependencies": {
     "@hivefund/shared": "0.1.0",

@@ -77,3 +77,19 @@ On Vercel, API routes read `web/public/offchain/` (Stream B's `exportSnapshot`).
   - Motion is CSS `steps()` transitions. React only re-renders the arena once per event.
   - With `prefers-reduced-motion`, there is no animation; a numbered list of the same events is shown instead.
 - **`HIVEFUND_FORCE_SAMPLE=1`:** a local design/testing switch that shows sample data even when a deployment exists. The SAMPLE DATA banner is still shown.
+
+## Recorded testnet run (data/testnet-run/)
+- **Read order for off-chain records** (merged by hash in `/api/offchain`, `/api/offchain/[hash]`, `/api/strategy` and `/api/tx`):
+  1. `$HIVEFUND_DATA_DIR`, default `<repo>/data` (live agent output on this machine)
+  2. the recorded testnet run
+  3. `web/public/offchain/`
+- **Chain views** (bounties, bids, treasury, reputation, activity, supply) always come from RPC in the browser. The recorded run never replaces them.
+- **Hub check:** the recorded run is used only when its `manifest.hub` equals the deployed hub. It is labelled "recorded testnet run" in the live status bar, and the SAMPLE banner is never shown for it.
+- **Hosting (robust option chosen):** `npm -w web run build` runs `prebuild`, i.e. `tsx scripts/bundle-recorded.ts`.
+  - The script re-hashes every object and writes `web/src/generated/recorded-run.json`: the manifest, `config/deployment.testnet.json`, index, strategy, tx and the offchain objects.
+  - `lib/server/data.ts` imports that file statically, so it ships inside the server bundle on any host (Vercel functions included) with no runtime filesystem access.
+  - The generated file is committed so typecheck and lint work on a fresh clone. Rebuilding refreshes it.
+  - Run `npm -w web run bundle:recorded` after re-exporting the run.
+- **Deployment fallback:** if `config/deployment.testnet.json` is not on the function filesystem, the bundled copy is used, so hosted builds still default to live mode.
+- **Tx links:** rows with `ok: false` (failed transactions) are ignored when choosing which tx to link. Rows without a `txHash` cannot be linked.
+- **Ledger and captions:** raw contract amounts (`… yocto`, `… HIVE-raw/HIVE-yocto`, `… ms`) are rendered in NEAR, HIVE and minutes by `humanizeDetail()`.

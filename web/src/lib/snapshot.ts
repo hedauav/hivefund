@@ -42,6 +42,10 @@ export interface TxLogEntry {
   method: string;
   args?: unknown;
   txHash: string;
+  contract?: string;
+  /** false when the transaction failed on-chain (still a real tx, but not the one that changed state) */
+  ok?: boolean;
+  explorer?: string;
 }
 
 /** Client-visible runtime config, served by /api/config. */
@@ -53,6 +57,8 @@ export interface WebConfig {
   token: string | null;
   explorer: string;
   dataSource: string;
+  /** Present when off-chain records include the committed recorded testnet run for this hub. */
+  recorded: { label: string; captured_at: string; objects: number; txs: number } | null;
 }
 
 export type StrategyLog = Record<string, StrategyChange[]>;

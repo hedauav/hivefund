@@ -49,7 +49,7 @@ function RoundBids({
   selectionHash: string | null;
   workers: Map<string, WorkerView>;
 }) {
-  const { config, txs } = useHub();
+  const { config } = useHub();
   const sel = useOffchain<SelectionRationale>(selectionHash);
   const rationale = sel.status === "ok" ? sel.object : null;
   const live = config?.mode === "live";
@@ -80,7 +80,7 @@ function RoundBids({
         )}
       </div>
       <div className="-mx-4 overflow-x-auto">
-        <table className={cx("ledger w-full text-sm", compact ? "min-w-[460px]" : "min-w-[760px]")}>
+        <table className={cx("ledger w-full text-sm", compact ? "min-w-[380px]" : "min-w-[760px]")}>
           <thead className="text-left">
             <tr>
               <th className="px-4 py-1.5 font-medium">Bid</th>
@@ -88,9 +88,9 @@ function RoundBids({
               <th className="px-2 py-1.5 text-right font-medium">Price</th>
               {!compact && <th className="px-2 py-1.5 text-right font-medium">ETA</th>}
               <th className="px-2 py-1.5 text-right font-medium">Score</th>
-              <th className="px-2 py-1.5 font-medium">Signature</th>
+              {!compact && <th className="px-2 py-1.5 font-medium">Signature</th>}
               <th className="px-2 py-1.5 font-medium">Status</th>
-              <th className="px-4 py-1.5 font-medium">Tx</th>
+              {!compact && <th className="px-4 py-1.5 font-medium">Tx</th>}
             </tr>
           </thead>
           <tbody>
@@ -118,26 +118,26 @@ function RoundBids({
                   <td className="whitespace-nowrap px-2 py-2 text-right">{near(b.price_yocto)}</td>
                   {!compact && <td className="px-2 py-2 text-right text-xs">{minutes(b.eta_ms)}</td>}
                   <td className="px-2 py-2 text-right font-mono text-xs">{cand ? cand.score.toFixed(3) : "—"}</td>
-                  <td className="px-2 py-2">
-                    <Check ok={sig.ok}>{sig.label}</Check>
-                  </td>
-                  <td className="px-2 py-2">
+                  {!compact && (
+                    <td className="px-2 py-2">
+                      <Check ok={sig.ok}>{sig.label}</Check>
+                    </td>
+                  )}
+                  <td className={cx("px-2 py-2", compact && "pr-4")}>
                     <BidStatusChip status={b.status} />
                     {b.reject_reason && <div className="mt-0.5 text-[11px] font-medium text-bad">{b.reject_reason}</div>}
-                  </td>
-                  <td className="px-4 py-2 text-xs">
-                    <TxLink hash={txs.bid(b)} />
-                    {b.status === "Rejected" && b.reject_reason === "invalid bid signature" && (
-                      <div className="text-[11px]">
-                        reject <TxLink hash={txs.rejection(bounty.id, b.id)} />
-                      </div>
-                    )}
-                    {winner && bounty.winner_bid_id === b.id && (
-                      <div className="text-[11px]">
-                        select <TxLink hash={txs.selection(bounty.id, b.id)} />
+                    {compact && (
+                      <div className="mt-0.5 space-y-0.5 text-[11px] font-normal">
+                        <Check ok={sig.ok}>sig {sig.ok === null ? "unchecked" : sig.ok ? "ok" : "bad"}</Check>
+                        <BidTxs bid={b} bounty={bounty} winner={winner} />
                       </div>
                     )}
                   </td>
+                  {!compact && (
+                    <td className="px-4 py-2 text-xs">
+                      <BidTxs bid={b} bounty={bounty} winner={winner} />
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -145,6 +145,28 @@ function RoundBids({
         </table>
       </div>
     </div>
+  );
+}
+
+/** bid, reject and select transactions for one bid row. */
+function BidTxs({ bid, bounty, winner }: { bid: Bid; bounty: Bounty; winner: boolean }) {
+  const { txs } = useHub();
+  return (
+    <>
+      <div className="whitespace-nowrap">
+        bid <TxLink hash={txs.bid(bid)} />
+      </div>
+      {bid.status === "Rejected" && bid.reject_reason === "invalid bid signature" && (
+        <div className="whitespace-nowrap">
+          reject <TxLink hash={txs.rejection(bounty.id, bid.id)} />
+        </div>
+      )}
+      {winner && bounty.winner_bid_id === bid.id && (
+        <div className="whitespace-nowrap">
+          select <TxLink hash={txs.selection(bounty.id, bid.id)} />
+        </div>
+      )}
+    </>
   );
 }
 

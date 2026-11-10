@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { ActivityKind } from "@hivefund/shared";
 import { useHub } from "@/providers/data-provider";
-import { near, timeAgo } from "@/lib/format";
+import { humanizeDetail, near, timeAgo } from "@/lib/format";
 import { Account, BlockLink, Card, Chip, Empty } from "./ui";
 
 const TONE: Partial<Record<ActivityKind, string>> = {
@@ -50,7 +50,7 @@ export function ActivityFeed({ bountyId, limit = 40 }: { bountyId?: number; limi
                 <Chip tone={TONE[a.kind] ?? "bg-panel-2 text-muted"}>{a.kind}</Chip>
               </div>
               <div className="min-w-0">
-                <span className="break-words">{a.detail}</span>
+                <span className="break-anywhere">{humanizeDetail(a.detail)}</span>
                 <div className="text-[11px] text-muted">
                   <Account id={a.actor} />
                   {a.bounty_id != null && (

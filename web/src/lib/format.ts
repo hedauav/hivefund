@@ -1,5 +1,6 @@
 import { formatHive, formatNear } from "@hivefund/shared";
 
+
 export const near = (yocto: string | bigint | null | undefined, frac = 3) =>
   yocto == null ? "—" : `${formatNear(yocto, frac)} Ⓝ`;
 
@@ -37,4 +38,15 @@ export const clock = (ms: number) =>
 /** Worker role label derived from the sub-account name (cheap.*, quality.*, adaptive.*, forger.*). */
 export function workerRole(id: string): string {
   return id.split(".")[0];
+}
+
+/**
+ * Contract log lines carry raw integers ("paid x 27823500000000000000000 yocto",
+ * "minted 251100000000000000 HIVE-raw", "eta 600000 ms"). Render them in human units.
+ */
+export function humanizeDetail(detail: string): string {
+  return detail
+    .replace(/\b(\d{10,}) yocto\b/g, (_, n: string) => `${formatNear(n, 4)} NEAR`)
+    .replace(/\b(\d{10,}) HIVE(?:-raw|-yocto)?\b/g, (_, n: string) => `${formatHive(n, 4)} HIVE`)
+    .replace(/\b(\d{4,}) ms\b/g, (_, n: string) => `${Math.round(Number(n) / 60000)}m`);
 }

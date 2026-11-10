@@ -36,6 +36,11 @@ export function ModeBanner() {
             token <Account id={config.token} full />
           </span>
         )}
+        {config.recorded && (
+          <span title={`${config.recorded.objects} off-chain records and ${config.recorded.txs} transactions from data/testnet-run`}>
+            off-chain records include the {config.recorded.label} ({new Date(config.recorded.captured_at).toLocaleDateString()})
+          </span>
+        )}
         <span className="ml-auto">
           {error ? (
             <span className="text-bad">RPC error: {error}</span>
