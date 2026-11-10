@@ -228,6 +228,75 @@ export interface BountySpec {
   budget_yocto: U128;
   min_tier: 1 | 2 | 3;
   deadline_minutes: number;
+  /** Present on procurement bounties: "find the best real product under this budget". See procurement.ts. */
+  procurement?: ProcurementSpec;
+}
+
+/**
+ * Procurement bounty: workers recommend a REAL item from a public priced catalog; the verifier re-fetches the
+ * live catalog and checks existence, quoted price, budget and every hard requirement before any payout.
+ * The bounty reward (budget_yocto, NEAR) is separate from the product budget (USD, the catalog's currency).
+ */
+export interface ProcurementSpec {
+  /** catalog adapter id. "nearai-models": NEAR AI Cloud GET /v1/models (real per-1M-token USD prices). */
+  catalog: "nearai-models";
+  catalog_url: string;
+  currency: "USD";
+  /** max workload cost of the chosen item, in USD */
+  product_budget_usd: number;
+  /** workload the item is bought for: millions of input / output tokens */
+  workload: { input_mtok: number; output_mtok: number };
+  requirements: ProcurementRequirements;
+  /** quoted vs live price may differ by at most this much (relative, percent) */
+  price_tolerance_pct: number;
+  /** after the automated checks, make one tiny real call to the chosen model (needs the verifier's NEAR AI key) */
+  delivery_check: boolean;
+}
+
+export interface ProcurementRequirements {
+  supported_features?: string[];
+  min_context_length?: number;
+  input_modalities?: string[];
+  output_modalities?: string[];
+}
+
+/** One normalized catalog entry. Prices are USD per 1M tokens. */
+export interface CatalogItem {
+  id: string;
+  name: string | null;
+  pricing: { input: number; output: number };
+  context_length: number | null;
+  supported_features: string[];
+  input_modalities: string[];
+  output_modalities: string[];
+}
+
+/** Hash-locked evidence the verifier fetched for a procurement bounty (part of VerificationReport). */
+export interface ProcurementEvidence {
+  catalog_url: string;
+  fetched_at_ms: number;
+  catalog_size: number;
+  item_id: string;
+  found: boolean;
+  quoted_pricing: { input: number; output: number } | null;
+  live_pricing: { input: number; output: number } | null;
+  price_match: boolean;
+  quoted_workload_cost_usd: number | null;
+  live_workload_cost_usd: number | null;
+  budget_usd: number;
+  within_budget: boolean;
+  requirement_checks: { requirement: string; expected: string; actual: string; passed: boolean }[];
+  compliant_count: number;
+  cheapest_compliant: { id: string; workload_cost_usd: number } | null;
+  delivery: {
+    model: string;
+    ok: boolean;
+    http_status: number | null;
+    prompt_tokens: number | null;
+    completion_tokens: number | null;
+    cost_usd: number | null;
+    details: string;
+  } | null;
 }
 
 export interface Deliverable {
@@ -246,7 +315,7 @@ export interface DeliverableGenerator {
   model: string | null;
 }
 
-export type CheckId = "schema" | "sections" | "test" | "rubric";
+export type CheckId = "schema" | "sections" | "test" | "catalog" | "delivery" | "rubric";
 
 export interface CheckResult {
   id: CheckId;
@@ -281,6 +350,8 @@ export interface VerificationReport {
   score: number;
   verifier: AccountId;
   created_ms: number;
+  /** procurement bounties only: live catalog evidence */
+  procurement?: ProcurementEvidence;
 }
 
 export interface SelectionWeights {
