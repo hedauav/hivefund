@@ -52,8 +52,10 @@ export function loadDeployment(): DeploymentConfig | null {
 export function getWebConfig(): WebConfig {
   const dep = loadDeployment();
   const network = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : (dep?.network ?? "testnet");
-  const hub = process.env.NEXT_PUBLIC_HUB_CONTRACT || dep?.hub || null;
-  const token = process.env.NEXT_PUBLIC_TOKEN_CONTRACT || dep?.token || null;
+  // HIVEFUND_FORCE_SAMPLE=1 is a local design/testing switch: it still shows the SAMPLE DATA banner.
+  const forceSample = process.env.HIVEFUND_FORCE_SAMPLE === "1";
+  const hub = forceSample ? null : process.env.NEXT_PUBLIC_HUB_CONTRACT || dep?.hub || null;
+  const token = forceSample ? null : process.env.NEXT_PUBLIC_TOKEN_CONTRACT || dep?.token || null;
   const rpcUrl =
     process.env.NEXT_PUBLIC_RPC_URL ||
     dep?.rpcUrl ||

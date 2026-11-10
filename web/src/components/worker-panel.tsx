@@ -43,14 +43,14 @@ export function WorkerPanel() {
   );
 
   return (
-    <Card id="workers" title="Worker agents" subtitle="Each worker is its own NEAR sub-account with a function-call key limited to place_bid / submit_work">
+    <Card id="workers" n="06" title="Workers" subtitle="one sub-account each; keys can only call place_bid and submit_work">
       {!workers.length ? (
         <Empty>No workers registered.</Empty>
       ) : (
         <div className="-mx-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
-              <tr className="border-b border-line">
+          <table className="ledger w-full min-w-[720px] text-sm">
+            <thead className="text-left">
+              <tr>
                 <th className="px-4 py-1.5 font-medium">Worker</th>
                 <th className="px-2 py-1.5 font-medium">Tier</th>
                 <th className="px-2 py-1.5 text-right font-medium">Bids</th>
@@ -63,7 +63,7 @@ export function WorkerPanel() {
             </thead>
             <tbody>
               {stats.map(({ w, bids: n, rejected, winRate }) => (
-                <tr key={w.account_id} className="border-b border-line/60 last:border-0">
+                <tr key={w.account_id} className="">
                   <td className="px-4 py-2">
                     <Account id={w.account_id} />
                     {!w.active && <Chip tone="ml-1 bg-bad-soft text-bad">inactive</Chip>}
@@ -88,8 +88,8 @@ export function WorkerPanel() {
         </div>
       )}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-5">
-        <div className="rounded-lg border border-line p-3 lg:col-span-3">
+      <div className="mt-4 grid gap-4 lg:grid-cols-5 [&>*]:min-w-0">
+        <div className=" border border-hair p-3 lg:col-span-3">
           <div className="mb-1 text-xs font-medium text-muted">Margin over time (from the workers&apos; strategy logs)</div>
           {chart.data.length ? (
             <div className="h-52">
@@ -133,7 +133,7 @@ export function WorkerPanel() {
             <p className="mt-1 text-xs text-muted">cheap and quality use fixed margins (5% and 35%); adaptive moves within 5–50%.</p>
           )}
         </div>
-        <div className="rounded-lg border border-line p-3 lg:col-span-2">
+        <div className=" border border-hair p-3 lg:col-span-2">
           <div className="mb-2 text-xs font-medium text-muted">Strategy-change reasons</div>
           {!reasons.length ? (
             <Empty>Nothing yet.</Empty>
@@ -153,7 +153,7 @@ export function WorkerPanel() {
                     {r.window.map((o, j) => (
                       <span
                         key={j}
-                        className={`rounded px-1 font-mono text-[10px] ${o === "win" ? "bg-ok-soft text-ok" : o === "fail" ? "bg-bad-soft text-bad" : "bg-panel-2 text-muted"}`}
+                        className={` px-1 font-mono text-[10px] ${o === "win" ? "bg-ok-soft text-ok" : o === "fail" ? "bg-bad-soft text-bad" : "bg-panel-2 text-muted"}`}
                       >
                         {o}
                       </span>

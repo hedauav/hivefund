@@ -9,7 +9,7 @@ export function ReputationTable() {
   const rows = [...(snapshot?.reputation ?? [])].sort((a, b) => b.reputation - a.reputation);
   const max = Math.max(1, ...rows.map((r) => r.reputation));
   return (
-    <Card title="Reputation" subtitle="On-chain: completed×10 + Σscore/10 − failed×15">
+    <Card n="08" title="Reputation" subtitle="completed×10 + Σscore/10 − failed×15, computed on-chain">
       {!rows.length ? (
         <Empty>No workers yet.</Empty>
       ) : (
@@ -21,8 +21,8 @@ export function ReputationTable() {
                 <Account id={r.account_id} />
                 <span className="ml-auto font-semibold">{r.reputation}</span>
               </div>
-              <div className="ml-6 mt-1 h-1.5 rounded-full bg-panel-2">
-                <div className="h-1.5 rounded-full bg-accent" style={{ width: `${(r.reputation / max) * 100}%` }} />
+              <div className="ml-6 mt-1 h-1.5 bg-panel-2">
+                <div className="h-1.5 bg-accent" style={{ width: `${(r.reputation / max) * 100}%` }} />
               </div>
               <div className="ml-6 mt-0.5 text-[11px] text-muted">
                 {r.completed} done · {r.failed} failed · Σscore {r.total_score}

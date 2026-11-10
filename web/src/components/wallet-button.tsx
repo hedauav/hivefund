@@ -11,12 +11,12 @@ export function WalletButton() {
   const { explorer } = useHub();
   const [err, setErr] = useState<string | null>(null);
   if (!wallet || !wallet.ready) {
-    return <span className="rounded-lg border border-line px-3 py-1.5 text-xs text-muted">Wallet…</span>;
+    return <span className=" border border-line px-3 py-1.5 text-xs text-muted">Wallet…</span>;
   }
   if (wallet.accountId) {
     return (
       <div className="flex items-center gap-2 text-xs">
-        <span className="hidden rounded-lg bg-panel-2 px-2.5 py-1.5 sm:inline">
+        <span className="hidden bg-panel-2 px-2.5 py-1.5 sm:inline">
           {explorer.enabled || wallet.network === "testnet" ? (
             <ExtLink href={`https://${wallet.network === "testnet" ? "testnet." : ""}nearblocks.io/address/${wallet.accountId}`}>
               {shortAccount(wallet.accountId)}
@@ -25,7 +25,7 @@ export function WalletButton() {
             shortAccount(wallet.accountId)
           )}
         </span>
-        <button onClick={() => wallet.signOut()} className="rounded-lg border border-line px-3 py-1.5 text-muted hover:text-ink">
+        <button onClick={() => wallet.signOut()} className=" border border-line px-3 py-1.5 text-muted hover:text-ink">
           Sign out
         </button>
       </div>
@@ -39,7 +39,7 @@ export function WalletButton() {
           setErr(null);
           wallet.signIn().catch((e: unknown) => setErr(e instanceof Error ? e.message : "sign-in cancelled"));
         }}
-        className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-black hover:brightness-110"
+        className=" btn btn-primary hover:brightness-110"
       >
         Connect {wallet.network} wallet
       </button>

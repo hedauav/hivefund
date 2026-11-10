@@ -16,23 +16,29 @@ export function Card({
   children,
   className,
   id,
-}: PropsWithChildren<{ title: ReactNode; subtitle?: ReactNode; action?: ReactNode; className?: string; id?: string }>) {
+  n,
+}: PropsWithChildren<{ title: ReactNode; subtitle?: ReactNode; action?: ReactNode; className?: string; id?: string; n?: string }>) {
   return (
-    <section id={id} className={cx("rounded-xl border border-line bg-panel shadow-sm", className)}>
-      <header className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 py-3">
-        <div>
-          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
-        </div>
-        {action}
+    <section id={id} className={cx("sheet scroll-mt-6", className)}>
+      <header className="sheet-head">
+        {n && <span className="tag">{n}</span>}
+        <h2 className="sheet-title">{title}</h2>
+        {subtitle && <span className="text-xs text-muted">{subtitle}</span>}
+        {action && <div className="ml-auto">{action}</div>}
       </header>
       <div className="p-4">{children}</div>
     </section>
   );
 }
 
-export function Empty({ children }: PropsWithChildren) {
-  return <p className="py-6 text-center text-sm text-muted">{children}</p>;
+/** A designed empty state: what's missing and what will fill it. */
+export function Empty({ children, hint }: PropsWithChildren<{ hint?: ReactNode }>) {
+  return (
+    <div className="border border-dashed border-hair px-4 py-6 text-center">
+      <p className="text-sm">{children}</p>
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    </div>
+  );
 }
 
 const BOUNTY_TONE: Record<BountyStatus, string> = {
@@ -56,7 +62,11 @@ const BID_TONE: Record<BidStatus, string> = {
 };
 
 export function Chip({ children, tone }: PropsWithChildren<{ tone: string }>) {
-  return <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium", tone)}>{children}</span>;
+  return (
+    <span className={cx("inline-flex items-center border border-current px-1.5 py-px font-mono text-[10px] font-semibold uppercase tracking-wide", tone)}>
+      {children}
+    </span>
+  );
 }
 
 export const BountyStatusChip = ({ status }: { status: BountyStatus }) => <Chip tone={BOUNTY_TONE[status]}>{status}</Chip>;
@@ -70,7 +80,7 @@ const ExtIcon = () => (
 
 export function ExtLink({ href, children, title }: PropsWithChildren<{ href: string; title?: string }>) {
   return (
-    <a href={href} target="_blank" rel="noreferrer" title={title} className="text-accent-text underline-offset-2 hover:underline">
+    <a href={href} target="_blank" rel="noreferrer" title={title} className="text-info underline decoration-1 underline-offset-2 hover:decoration-2">
       {children}
       <ExtIcon />
     </a>
@@ -129,9 +139,9 @@ export function Mono({ children, title }: PropsWithChildren<{ title?: string }>)
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-panel px-4 py-3">
-      <div className="text-[11px] font-medium uppercase tracking-wider text-muted">{label}</div>
-      <div className="mt-1 text-xl font-semibold tracking-tight">{value}</div>
+    <div className="px-4 py-3">
+      <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</div>
+      <div className="mt-0.5 font-display text-2xl font-bold tracking-tight">{value}</div>
       {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
     </div>
   );

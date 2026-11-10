@@ -57,3 +57,23 @@ Off-chain objects (specs, deliverables, reports, selection rationales), strategy
 
 ## Hosting note
 On Vercel, API routes read `web/public/offchain/` (Stream B's `exportSnapshot`). `next.config.ts` traces `fixtures/`, `data/sample/` and `config/*.json` into the functions.
+
+## Redesign + Swarm Arena (2026-11-10)
+- **Look:** printed-matter palette defined as CSS tokens in `web/src/app/globals.css`: paper `#EFE8DA`, ink `#1E1B16`, brick (failures), moss (passes), ochre (HIVE), denim (links). Dark mode is soil brown with the same hues. Text pairs are noted in the file as ≥4.5:1.
+  - Fonts: Public Sans (UI), Bricolage Grotesque (headings), IBM Plex Mono (hashes), Pixelify Sans (arena only).
+  - Surfaces use 1.5px ink rules, 2px radius and offset solid shadows.
+  - Tables use the `.ledger` class with tabular figures.
+  - Section headers are numbered tags (01–09). Empty states say what is missing and what will fill it.
+- **Order on `/`:** arena → totals strip → bounties + bids (7/5 split) → verification → HIVE → workers → treasury + reputation (5/7) → ledger.
+- **Arena code** (`web/src/components/arena/`, about 15 KB of source):
+  - `model.ts`: a pure reducer over `get_activity_log` entries plus the strategy logs.
+  - `sprites.tsx`: hand-placed 8×10 pixel figures.
+  - `arena.tsx`: the player.
+- **Arena behaviour:**
+  - On first load, history is fast-forwarded and the last 14 events are replayed.
+  - New events picked up by the 5 s poll are queued and animate as they arrive.
+  - Controls: play/pause, 1×/2×/4× speed and replay.
+  - The caption narrates the current event and links its block on nearblocks in live mode.
+  - Motion is CSS `steps()` transitions. React only re-renders the arena once per event.
+  - With `prefers-reduced-motion`, there is no animation; a numbered list of the same events is shown instead.
+- **`HIVEFUND_FORCE_SAMPLE=1`:** a local design/testing switch that shows sample data even when a deployment exists. The SAMPLE DATA banner is still shown.

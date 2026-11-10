@@ -9,23 +9,24 @@ import { Account, BidStatusChip, Card, Check, Chip, cx, Empty, TxLink } from "./
 
 const RED: Bid["status"][] = ["Rejected", "Superseded", "Failed"];
 
-export function BidBoard({ bounty }: { bounty: Bounty }) {
+export function BidBoard({ bounty, compact = false }: { bounty: Bounty; compact?: boolean }) {
   const { snapshot, index } = useHub();
   const bids = useMemo(() => (snapshot?.bids ?? []).filter((b) => b.bounty_id === bounty.id), [snapshot, bounty.id]);
   const rounds = [...new Set(bids.map((b) => b.round))].sort((a, z) => z - a);
   const workers = useMemo(() => new Map((snapshot?.reputation ?? []).map((w) => [w.account_id, w])), [snapshot]);
   return (
     <Card
-      title={`Bid board · bounty #${bounty.id}`}
-      subtitle="Every bid stored on-chain, including rejected ones. Coordinator scores come from its published selection rationale."
+      n="03"
+      title={`Bids on #${bounty.id}`}
+      subtitle={compact ? bounty.title : "all rounds, rejected bids included"}
     >
       {!bids.length ? (
-        <Empty>No bids yet.</Empty>
+        <Empty hint="Workers decide on their own whether a bounty is worth bidding on.">No bids on this bounty yet.</Empty>
       ) : (
         <div className="space-y-5">
           {rounds.map((r) => {
             const sel = index.find((e) => e.kind === "selection" && e.bounty_id === bounty.id && e.round === r);
-            return <RoundBids key={r} bounty={bounty} round={r} bids={bids.filter((b) => b.round === r)} selectionHash={sel?.hash ?? null} workers={workers} />;
+            return <RoundBids key={r} bounty={bounty} round={r} bids={bids.filter((b) => b.round === r)} selectionHash={sel?.hash ?? null} workers={workers} compact={compact} />;
           })}
         </div>
       )}
@@ -39,7 +40,9 @@ function RoundBids({
   bids,
   selectionHash,
   workers,
+  compact,
 }: {
+  compact: boolean;
   bounty: Bounty;
   round: number;
   bids: Bid[];
@@ -60,8 +63,12 @@ function RoundBids({
         {round === bounty.round && bounty.status !== "Completed" && bounty.status !== "Cancelled" && <Chip tone="bg-info-soft text-info">current</Chip>}
         {rationale ? (
           <span>
-            score = {rationale.weights.price}·(1−price/budget) + {rationale.weights.eta}·(1−eta/max) + {rationale.weights.reputation}·rep/max ·{" "}
-            <a href={`/api/offchain/${selectionHash}`} target="_blank" rel="noreferrer" className="text-accent-text hover:underline">
+            {!compact && (
+              <>
+                score = {rationale.weights.price}·(1−price/budget) + {rationale.weights.eta}·(1−eta/max) + {rationale.weights.reputation}·rep/max ·{" "}
+              </>
+            )}
+            <a href={`/api/offchain/${selectionHash}`} target="_blank" rel="noreferrer" className="text-info underline underline-offset-2">
               rationale {shortHash(selectionHash, 6)}
             </a>{" "}
             <Check ok>hash verified</Check>
@@ -73,13 +80,13 @@ function RoundBids({
         )}
       </div>
       <div className="-mx-4 overflow-x-auto">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
-            <tr className="border-b border-line">
+        <table className={cx("ledger w-full text-sm", compact ? "min-w-[460px]" : "min-w-[760px]")}>
+          <thead className="text-left">
+            <tr>
               <th className="px-4 py-1.5 font-medium">Bid</th>
               <th className="px-2 py-1.5 font-medium">Worker</th>
               <th className="px-2 py-1.5 text-right font-medium">Price</th>
-              <th className="px-2 py-1.5 text-right font-medium">ETA</th>
+              {!compact && <th className="px-2 py-1.5 text-right font-medium">ETA</th>}
               <th className="px-2 py-1.5 text-right font-medium">Score</th>
               <th className="px-2 py-1.5 font-medium">Signature</th>
               <th className="px-2 py-1.5 font-medium">Status</th>
@@ -97,9 +104,8 @@ function RoundBids({
                 <tr
                   key={b.id}
                   className={cx(
-                    "border-b border-line/60 last:border-0",
-                    red && "bg-bad-soft/50 text-bad",
-                    winner && !red && "bg-accent-soft/70 font-medium",
+                    red && "bg-bad-soft text-bad",
+                    winner && !red && "bg-accent-soft font-semibold",
                   )}
                 >
                   <td className="px-4 py-2 font-mono text-xs">
@@ -109,8 +115,8 @@ function RoundBids({
                     <Account id={b.worker} />
                     <span className="ml-1 text-[11px] text-muted">t{b.tier}</span>
                   </td>
-                  <td className="px-2 py-2 text-right">{near(b.price_yocto)}</td>
-                  <td className="px-2 py-2 text-right text-xs">{minutes(b.eta_ms)}</td>
+                  <td className="whitespace-nowrap px-2 py-2 text-right">{near(b.price_yocto)}</td>
+                  {!compact && <td className="px-2 py-2 text-right text-xs">{minutes(b.eta_ms)}</td>}
                   <td className="px-2 py-2 text-right font-mono text-xs">{cand ? cand.score.toFixed(3) : "—"}</td>
                   <td className="px-2 py-2">
                     <Check ok={sig.ok}>{sig.label}</Check>

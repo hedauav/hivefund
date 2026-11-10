@@ -10,22 +10,20 @@ export function BountyBoard({ selected, onSelect }: { selected?: number | null; 
   const { snapshot, txs } = useHub();
   const bounties = [...(snapshot?.bounties ?? [])].sort((a, b) => b.updated_ms - a.updated_ms);
   return (
-    <Card id="bounties" title="Bounty board" subtitle="Bounties held in escrow by the bounty-hub contract">
+    <Card id="bounties" n="02" title="Bounties" subtitle="budget held in escrow until verified">
       {!bounties.length ? (
         <Empty>No bounties posted yet.</Empty>
       ) : (
         <div className="-mx-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
-              <tr className="border-b border-line">
+          <table className="ledger w-full min-w-[560px] text-sm">
+            <thead className="text-left">
+              <tr>
                 <th className="px-4 py-2 font-medium">#</th>
                 <th className="px-2 py-2 font-medium">Bounty</th>
                 <th className="px-2 py-2 font-medium">Status</th>
                 <th className="px-2 py-2 text-right font-medium">Budget</th>
-                <th className="px-2 py-2 text-center font-medium">Round / fails</th>
-                <th className="px-2 py-2 font-medium">Deadline</th>
-                <th className="px-2 py-2 font-medium">Spec</th>
-                <th className="px-4 py-2 font-medium">Post tx</th>
+                <th className="px-2 py-2 text-center font-medium">Rnd / fail</th>
+                <th className="px-4 py-2 font-medium">Record</th>
               </tr>
             </thead>
             <tbody>
@@ -44,7 +42,7 @@ function BountyRow({ b, active, onSelect, postTx }: { b: Bounty; active: boolean
   const bidsCount = b.bid_ids.length;
   return (
     <tr
-      className={`border-b border-line/60 last:border-0 ${onSelect ? "cursor-pointer hover:bg-panel-2" : ""} ${active ? "bg-accent-soft/60" : ""}`}
+      className={`${onSelect ? "cursor-pointer hover:bg-panel-2" : ""} ${active ? "bg-accent-soft shadow-[inset_3px_0_0_var(--accent)]" : ""}`}
       onClick={() => onSelect?.(b.id)}
     >
       <td className="px-4 py-2.5 font-mono text-xs text-muted">{b.id}</td>
@@ -53,7 +51,7 @@ function BountyRow({ b, active, onSelect, postTx }: { b: Bounty; active: boolean
           {b.title}
         </Link>
         <div className="text-xs text-muted">
-          {bidsCount} bid{bidsCount === 1 ? "" : "s"} · min tier {b.min_tier}
+          {bidsCount} bid{bidsCount === 1 ? "" : "s"} · tier ≥{b.min_tier} · due {timeAgo(b.deadline_ms)}
           {b.status === "Completed" && BigInt(b.hive_minted) > 0n && <> · minted {hive(b.hive_minted, 2)}</>}
           {b.winner_bid_id != null && (
             <>
@@ -66,22 +64,21 @@ function BountyRow({ b, active, onSelect, postTx }: { b: Bounty; active: boolean
       <td className="px-2 py-2.5">
         <BountyStatusChip status={b.status} />
       </td>
-      <td className="px-2 py-2.5 text-right font-medium">{near(b.budget_yocto, 2)}</td>
+      <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium">{near(b.budget_yocto, 2)}</td>
       <td className="px-2 py-2.5 text-center">
         <span className="font-mono text-xs">
           {b.round} / <span className={b.attempts ? "text-bad" : ""}>{b.attempts}</span>
         </span>
       </td>
-      <td className="px-2 py-2.5 text-xs text-muted">{timeAgo(b.deadline_ms)}</td>
-      <td className="px-2 py-2.5">
-        <Link href={`/bounty/${b.id}#spec`} onClick={(e) => e.stopPropagation()} className="hover:text-accent-text">
-          <Mono title={b.spec_hash}>{shortHash(b.spec_hash, 6)}</Mono>
-        </Link>
-      </td>
-      <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
-        <TxLink hash={postTx} />
-        <div className="text-[11px] text-muted">
-          by <Account id={b.poster} />
+      <td className="px-4 py-2.5 text-xs" onClick={(e) => e.stopPropagation()}>
+        <div>
+          spec{" "}
+          <Link href={`/bounty/${b.id}#spec`} className="text-info underline underline-offset-2">
+            <Mono title={b.spec_hash}>{shortHash(b.spec_hash, 6)}</Mono>
+          </Link>
+        </div>
+        <div className="whitespace-nowrap">
+          post <TxLink hash={postTx} /> · <Account id={b.poster} />
         </div>
       </td>
     </tr>

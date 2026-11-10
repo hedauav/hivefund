@@ -25,11 +25,11 @@ export function TreasuryPanel() {
     ["Paid out to workers", t.paid_out, "bg-info"],
   ];
   return (
-    <Card id="treasury" title="Treasury" subtitle="NEAR held by the bounty-hub contract">
+    <Card id="treasury" n="07" title="Treasury">
       <div className="text-2xl font-semibold tracking-tight">{near(t.available, 3)}</div>
       <div className="text-xs text-muted">available of {near(t.funded_total, 3)} funded</div>
 
-      <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-panel-2">
+      <div className="mt-3 flex h-2.5 w-full overflow-hidden bg-panel-2">
         {rows.map(([label, v, color]) => (
           <div key={label} className={color} style={{ width: `${share(v)}%` }} title={`${label}: ${near(v)}`} />
         ))}
@@ -37,13 +37,13 @@ export function TreasuryPanel() {
       <dl className="mt-3 space-y-1.5 text-sm">
         {rows.map(([label, v, color]) => (
           <div key={label} className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${color}`} />
+            <span className={`h-2 w-2 ${color}`} />
             <dt className="text-muted">{label}</dt>
             <dd className="ml-auto font-medium">{near(v)}</dd>
           </div>
         ))}
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-muted" />
+          <span className="h-2 w-2 bg-muted" />
           <dt className="text-muted">Refunded from cancelled bounties</dt>
           <dd className="ml-auto font-medium">{near(t.refunded_total)}</dd>
         </div>

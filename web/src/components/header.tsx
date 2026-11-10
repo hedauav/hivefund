@@ -4,39 +4,44 @@ import Link from "next/link";
 import { useTheme } from "@/providers/theme-provider";
 import { WalletButton } from "./wallet-button";
 
+/** Pixel hex mark, drawn on a 7×7 grid. */
 export function Logo() {
   return (
-    <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
-      <path d="M16 2 28 9v14l-12 7-12-7V9z" fill="var(--accent)" />
-      <path d="M16 9.5 22 13v6.5l-6 3.5-6-3.5V13z" fill="var(--bg)" opacity="0.9" />
-      <path d="M16 13 19 14.8v3.4L16 20l-3-1.8v-3.4z" fill="var(--accent)" />
+    <svg viewBox="0 0 7 7" className="h-6 w-6" shapeRendering="crispEdges" aria-hidden>
+      <path d="M2 0h3v1h1v1h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-3h1v-1h1z" fill="var(--text)" />
+      <path d="M2 2h3v3h-3z" fill="var(--accent)" />
     </svg>
   );
 }
 
+const NAV = [
+  ["Bounties", "/#bounties"],
+  ["Verification", "/#verification"],
+  ["HIVE", "/#hive"],
+  ["Workers", "/#workers"],
+  ["Ledger", "/#activity"],
+] as const;
+
 export function Header() {
   const { theme, toggle } = useTheme();
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+    <header className="border-b-[1.5px] border-line bg-bg">
+      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Logo />
-          <span className="text-lg font-semibold tracking-tight">HiveFund</span>
+          <span className="font-display text-xl font-extrabold tracking-tight">HiveFund</span>
+          <span className="hidden font-mono text-[11px] text-muted lg:inline">bounty market · NEAR</span>
         </Link>
-        <nav className="hidden items-center gap-4 text-sm text-muted md:flex">
-          <Link href="/#bounties" className="hover:text-ink">Bounties</Link>
-          <Link href="/#hive" className="hover:text-ink">HIVE</Link>
-          <Link href="/#workers" className="hover:text-ink">Workers</Link>
-          <Link href="/#treasury" className="hover:text-ink">Treasury</Link>
-          <Link href="/#activity" className="hover:text-ink">Activity</Link>
+        <nav className="order-3 flex w-full gap-4 overflow-x-auto text-sm md:order-none md:w-auto">
+          {NAV.map(([label, href]) => (
+            <Link key={href} href={href} className="whitespace-nowrap text-muted underline-offset-4 hover:text-ink hover:underline">
+              {label}
+            </Link>
+          ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={toggle}
-            className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-muted hover:text-ink"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? "☀ Light" : "☾ Dark"}
+          <button onClick={toggle} className="btn" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
+            {theme === "dark" ? "Paper" : "Night"}
           </button>
           <WalletButton />
         </div>

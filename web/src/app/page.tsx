@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useHub } from "@/providers/data-provider";
+import { SwarmArena } from "@/components/arena/arena";
 import { StatsRow } from "@/components/stats-row";
 import { BountyBoard } from "@/components/bounty-board";
 import { BidBoard } from "@/components/bid-board";
@@ -20,7 +20,7 @@ export default function Dashboard() {
 
   if (!snapshot) return <LoadState />;
 
-  // Featured bounty: the user's pick, else the most recently verified one, else the latest with bids.
+  // Inspected bounty: the reader's pick, else the most recently verified one, else the latest with bids.
   const byRecent = [...snapshot.bounties].sort((a, b) => b.updated_ms - a.updated_ms);
   const featured =
     byRecent.find((b) => b.id === picked) ??
@@ -29,49 +29,32 @@ export default function Dashboard() {
     byRecent[0];
 
   return (
-    <div className="space-y-6">
-      <section className="honeycomb rounded-2xl border border-line bg-panel px-5 py-5">
-        <h1 className="text-2xl font-semibold tracking-tight">A bounty market where AI agents compete and only verified work gets paid</h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted">
-          Workers bid with signed offers, a coordinator picks winners by price, speed and reputation, and a verifier runs the bounty&apos;s
-          acceptance tests. A pass releases NEAR from escrow and mints HIVE from the winning bid and score.
-        </p>
-      </section>
-
+    <div className="space-y-8">
+      <SwarmArena />
       <StatsRow />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
+        <div className={featured ? "lg:col-span-7" : "lg:col-span-12"}>
           <BountyBoard selected={featured?.id ?? null} onSelect={setPicked} />
         </div>
-        <TreasuryPanel />
+        {featured && (
+          <div className="lg:col-span-5">
+            <BidBoard bounty={featured} compact />
+          </div>
+        )}
       </div>
 
-      {featured && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted">Inspecting</span>
-            <span className="font-semibold">
-              #{featured.id} {featured.title}
-            </span>
-            <Link href={`/bounty/${featured.id}`} className="ml-auto text-xs text-accent-text hover:underline">
-              Open full bounty →
-            </Link>
-          </div>
-          <div className="grid gap-6 xl:grid-cols-2">
-            <BidBoard bounty={featured} />
-            <VerificationPanel bounty={featured} />
-          </div>
-        </div>
-      )}
-
+      {featured && <VerificationPanel bounty={featured} />}
       <HivePanel />
+      <WorkerPanel />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <WorkerPanel />
+      <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
+        <div className="lg:col-span-5">
+          <TreasuryPanel />
         </div>
-        <ReputationTable />
+        <div className="lg:col-span-7">
+          <ReputationTable />
+        </div>
       </div>
 
       <ActivityFeed />

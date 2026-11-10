@@ -6,7 +6,7 @@ export function LoadState() {
   const { error, config } = useHub();
   if (error) {
     return (
-      <div className="rounded-xl border border-bad/40 bg-bad-soft p-5 text-sm text-bad">
+      <div className=" border border-bad/40 bg-bad-soft p-5 text-sm text-bad">
         <div className="font-semibold">Could not load market data</div>
         <p className="mt-1">{error}</p>
         {config?.mode === "live" && (
@@ -20,7 +20,7 @@ export function LoadState() {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-32 animate-pulse rounded-xl border border-line bg-panel" />
+        <div key={i} className="h-32 animate-pulse border border-line bg-panel" />
       ))}
     </div>
   );

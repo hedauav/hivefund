@@ -10,6 +10,7 @@ export function SpecPanel({ bounty }: { bounty: Bounty }) {
   return (
     <Card
       id="spec"
+      n="§"
       title="Acceptance spec"
       subtitle={
         <>
@@ -37,7 +38,7 @@ export function SpecPanel({ bounty }: { bounty: Bounty }) {
               {s.object.rubric.criteria.map((c) => `${c.id} ×${c.weight}`).join(" · ")} — pass ≥ {s.object.rubric.pass_threshold}
             </dd>
           </dl>
-          <details className="rounded-md bg-panel-2 p-2 text-xs">
+          <details className=" bg-panel-2 p-2 text-xs">
             <summary className="cursor-pointer text-muted">Deliverable JSON schema</summary>
             <pre className="mt-2 overflow-x-auto font-mono">{JSON.stringify(s.object.deliverable_schema, null, 2)}</pre>
           </details>

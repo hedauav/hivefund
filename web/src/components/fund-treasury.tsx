@@ -41,11 +41,11 @@ export function FundTreasury() {
   }
 
   return (
-    <div className="rounded-lg border border-dashed border-line bg-panel-2 p-3">
+    <div className=" border border-dashed border-line bg-panel-2 p-3">
       <div className="text-xs font-semibold">Fund the treasury</div>
       <p className="mt-0.5 text-xs text-muted">Signs a real <code className="font-mono">fund_treasury</code> transaction on {config.network} with your wallet.</p>
       <div className="mt-2 flex items-center gap-2">
-        <div className="flex items-center rounded-lg border border-line bg-panel">
+        <div className="flex items-center border border-line bg-panel">
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -59,11 +59,11 @@ export function FundTreasury() {
         {!live ? (
           <span className="text-xs text-muted">Available once contracts are deployed</span>
         ) : !wallet?.accountId ? (
-          <button onClick={() => wallet?.signIn()} disabled={!wallet} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-50">
+          <button onClick={() => wallet?.signIn()} disabled={!wallet} className=" btn btn-primary disabled:opacity-50">
             Connect wallet
           </button>
         ) : (
-          <button onClick={submit} disabled={busy} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-50">
+          <button onClick={submit} disabled={busy} className=" btn btn-primary disabled:opacity-50">
             {busy ? "Waiting for wallet…" : "Sign & fund"}
           </button>
         )}

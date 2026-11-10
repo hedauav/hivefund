@@ -27,8 +27,8 @@ export function HivePanel() {
   const live = config?.mode === "live";
 
   return (
-    <Card id="hive" title="HIVE supply" subtitle="NEP-141 token minted only by the bounty-hub on a verified pass. No admin mint exists.">
-      <div className="grid gap-3 sm:grid-cols-3">
+    <Card id="hive" n="05" title="HIVE supply" subtitle="minted by the hub on a verified pass; there is no admin mint">
+      <div className="grid gap-3 sm:grid-cols-3 [&>*]:min-w-0">
         <Stat label="Total minted (hub)" value={hive(totalMinted, 2)} hint={`${supply.length} mint event${supply.length === 1 ? "" : "s"}`} />
         <Stat
           label="ft_total_supply (token)"
@@ -44,7 +44,7 @@ export function HivePanel() {
         <Stat label="Mint rate" value={<span className="font-mono text-base">{snapshot?.config.mint_rate ?? "—"}</span>} hint="HIVE base units per milliNEAR·score/100" />
       </div>
 
-      <div className="mt-4 rounded-lg border border-line p-3">
+      <div className="mt-4 border border-hair p-3">
         <div className="mb-1 text-xs font-medium text-muted">Supply over time</div>
         {data.length ? (
           <div className="h-48">
@@ -87,9 +87,9 @@ export function HivePanel() {
             Every mint traced: <span className="font-mono">amount = bid_units × score / 100 × mint_rate</span> (bid_units = winning price in milliNEAR)
           </div>
           <div className="-mx-4 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
-                <tr className="border-b border-line">
+            <table className="ledger w-full min-w-[760px] text-sm">
+              <thead className="text-left">
+                <tr>
                   <th className="px-4 py-1.5 font-medium">Bounty</th>
                   <th className="px-2 py-1.5 font-medium">Winning bid</th>
                   <th className="px-2 py-1.5 font-medium">Recipient</th>
@@ -105,7 +105,7 @@ export function HivePanel() {
                   const bid = b?.winner_bid_id != null ? bids.get(b.winner_bid_id) : undefined;
                   const recomputed = bid ? mintAmount(bid.price_yocto, p.score, p.mint_rate).toString() : null;
                   return (
-                    <tr key={p.id} className="border-b border-line/60 last:border-0">
+                    <tr key={p.id} className="">
                       <td className="px-4 py-2">
                         <Link href={`/bounty/${p.bounty_id}`} className="hover:text-accent-text">
                           #{p.bounty_id} {b?.title ? <span className="text-muted">{b.title.slice(0, 28)}{b.title.length > 28 ? "…" : ""}</span> : null}

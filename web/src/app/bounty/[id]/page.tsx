@@ -41,7 +41,7 @@ export default function BountyPage({ params }: { params: Promise<{ id: string }>
         <BountyStatusChip status={bounty.status} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         <Card title="On-chain record" subtitle={config?.hub ? <>get_bounty on {explorer.enabled ? <Account id={config.hub} full /> : config.hub}</> : "sample data"}>
           <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-sm">
             <dt className="text-muted">Budget (escrow)</dt>

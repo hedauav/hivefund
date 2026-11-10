@@ -30,11 +30,12 @@ export function ActivityFeed({ bountyId, limit = 40 }: { bountyId?: number; limi
   return (
     <Card
       id="activity"
-      title="Activity log"
-      subtitle="get_activity_log: every action, including rejected bids and failed verifications. Each entry links to its block."
+      n="09"
+      title="Ledger"
+      subtitle="every contract action, rejections included"
       action={
         <label className="flex items-center gap-1.5 text-xs text-muted">
-          <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} className="accent-[var(--accent)]" />
+          <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} className="accent-[var(--info)]" />
           rejections & failures only
         </label>
       }
@@ -44,8 +45,10 @@ export function ActivityFeed({ bountyId, limit = 40 }: { bountyId?: number; limi
       ) : (
         <ol className="space-y-1.5">
           {shown.map((a) => (
-            <li key={a.id} className="grid grid-cols-[auto_1fr_auto] items-start gap-x-3 border-b border-line/50 pb-1.5 text-sm last:border-0">
-              <Chip tone={TONE[a.kind] ?? "bg-panel-2 text-muted"}>{a.kind}</Chip>
+            <li key={a.id} className="grid grid-cols-[1fr_auto] items-start gap-x-3 border-b border-dashed border-hair pb-1.5 text-sm last:border-0 sm:grid-cols-[10.5rem_1fr_auto]">
+              <div className="col-span-2 mb-0.5 sm:col-span-1 sm:mb-0">
+                <Chip tone={TONE[a.kind] ?? "bg-panel-2 text-muted"}>{a.kind}</Chip>
+              </div>
               <div className="min-w-0">
                 <span className="break-words">{a.detail}</span>
                 <div className="text-[11px] text-muted">
