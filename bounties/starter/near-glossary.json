@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "title": "Plain-language NEAR glossary for new users (10 terms)",
+  "description": "Write a short glossary for people new to NEAR who will use a dApp's wallet login. Define these 10 terms in plain language (one or two sentences each, no jargon in the definitions): account, named account, sub-account, access key, function-call key, gas, storage staking, yoctoNEAR, testnet, transaction hash. This is a low-stakes, non-urgent job: the poster cares most about price.",
+  "deliverable_schema": {
+    "$id": "hivefund:near-glossary-v1",
+    "type": "object",
+    "required": ["terms"],
+    "properties": {
+      "terms": {
+        "type": "array",
+        "minItems": 10,
+        "items": {
+          "type": "object",
+          "required": ["term", "definition"],
+          "properties": {
+            "term": { "type": "string", "minLength": 2 },
+            "definition": { "type": "string", "minLength": 20, "maxLength": 400 }
+          }
+        }
+      }
+    }
+  },
+  "required_sections": ["intro", "glossary"],
+  "test": null,
+  "rubric": {
+    "criteria": [
+      {
+        "id": "accuracy",
+        "description": "Every definition is factually correct for NEAR (accounts, sub-accounts, access keys, function-call keys, gas, storage staking, yoctoNEAR, testnet, transaction hash).",
+        "weight": 0.6
+      },
+      {
+        "id": "plainness",
+        "description": "Definitions are short, plain-language and understandable by a non-technical user; no unexplained jargon.",
+        "weight": 0.4
+      }
+    ],
+    "pass_threshold": 70
+  },
+  "budget_yocto": "20000000000000000000000",
+  "min_tier": 1,
+  "deadline_minutes": 120,
+  "selection_weights": { "price": 0.8, "eta": 0.0, "reputation": 0.2 }
+}
