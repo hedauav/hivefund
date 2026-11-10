@@ -51,6 +51,11 @@ export function validateDeliverable(d: unknown): string[] {
   if (!("data" in x)) p.push("data is required");
   if (x.code !== undefined && (!isObj(x.code) || Object.values(x.code).some((v) => typeof v !== "string")))
     p.push("code must be Record<string,string>");
+  if (x.generator !== undefined) {
+    const g = x.generator as unknown;
+    if (!isObj(g) || !["llm", "template", "failed"].includes(g.mode as string) || !(g.model === null || typeof g.model === "string"))
+      p.push('generator must be {mode:"llm"|"template"|"failed", model:string|null}');
+  }
   return p;
 }
 

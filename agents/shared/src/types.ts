@@ -237,6 +237,13 @@ export interface Deliverable {
   sections: Record<string, string>;
   data: unknown;
   code?: Record<string, string>;
+  /** Which generator produced the deliverable (LLM model or local template). */
+  generator?: DeliverableGenerator;
+}
+
+export interface DeliverableGenerator {
+  mode: "llm" | "template" | "failed";
+  model: string | null;
 }
 
 export type CheckId = "schema" | "sections" | "test" | "rubric";
