@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --import tsx --test \"**/*.test.ts\""
+    "test": "node --import tsx --test \"unit/**/*.test.ts\" \"e2e/**/*.test.ts\"",
+    "test:unit": "node --import tsx --test \"unit/**/*.test.ts\"",
+    "test:e2e": "node --import tsx --test \"e2e/**/*.test.ts\"",
+    "test:testnet": "node run-testnet.mjs"
   },
   "dependencies": {
+    "@hivefund/coordinator": "*",
     "@hivefund/shared": "*"
   }
 }
