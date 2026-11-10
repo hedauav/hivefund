@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="light"] {
+  --bg: #faf7f0;
+  --panel: #ffffff;
+  --panel-2: #f4efe3;
+  --border: #e7dfcc;
+  --text: #1d1a14;
+  --muted: #6b6455;
+  --accent: #d48806;
+  --accent-soft: #fdf0d2;
+  --accent-text: #8a5300;
+  --ok: #15803d;
+  --ok-soft: #dcfce7;
+  --bad: #c62828;
+  --bad-soft: #fde4e4;
+  --warn: #b45309;
+  --warn-soft: #fef3c7;
+  --info: #1d4ed8;
+  --info-soft: #dbeafe;
+  --chart-1: #d48806;
+  --chart-2: #2563eb;
+  --chart-3: #0f9f6e;
+  --chart-4: #b4245a;
+  --grid: #ece5d4;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0f0d09;
+  --panel: #18150f;
+  --panel-2: #211d15;
+  --border: #322b1f;
+  --text: #f4ede0;
+  --muted: #a39a87;
+  --accent: #f5a524;
+  --accent-soft: #3a2a0c;
+  --accent-text: #ffc861;
+  --ok: #4ade80;
+  --ok-soft: #12301d;
+  --bad: #f87171;
+  --bad-soft: #3a1414;
+  --warn: #fbbf24;
+  --warn-soft: #3a2b0a;
+  --info: #93c5fd;
+  --info-soft: #172a4a;
+  --chart-1: #f5a524;
+  --chart-2: #60a5fa;
+  --chart-3: #34d399;
+  --chart-4: #f472b6;
+  --grid: #2a2419;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+.honeycomb {
+  background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--accent) 18%, transparent) 1px, transparent 0);
+  background-size: 18px 18px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}

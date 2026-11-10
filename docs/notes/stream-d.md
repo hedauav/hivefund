@@ -1,0 +1,59 @@
+# Stream D notes: web dashboard (`/web`)
+
+Next.js 16.4 App Router · React 19 · Tailwind v4 · recharts 3 · `@hot-labs/near-connect` 0.12 · `near-api-js` 7.4.
+
+```
+npm -w web run dev       # http://localhost:3000
+npm -w web run build     # production build (passes)
+npm -w web run lint | typecheck
+npm -w web run fixture   # regenerate web/fixtures (sample data)
+```
+
+## Data source: live first
+
+| Condition | Mode | What renders |
+|---|---|---|
+| `config/deployment.testnet.json` has `hub`, or `NEXT_PUBLIC_HUB_CONTRACT` is set | **live** | The browser calls the bounty-hub views over JSON-RPC (`rpcUrl`, default `https://test.rpc.fastnear.com`) every 5 s: `get_config`, `get_bounties`, `get_bids` per bounty, `get_treasury`, `get_reputation`, `get_activity_log`, `get_supply_history`, plus `ft_total_supply` on the token. |
+| no deployment | **sample** | `data/sample/chain-snapshot.json` if present, else `web/fixtures/`. A prominent **"SAMPLE DATA — NOT LIVE"** banner is shown and no explorer links are rendered (sample hashes are not real). |
+
+There is no switch that shows sample data while a deployment exists.
+
+Off-chain objects (specs, deliverables, reports, selection rationales), strategy logs and the tx log are served by API routes from:
+- live: `$HIVEFUND_DATA_DIR` (default `<repo>/data`), then `web/public/offchain/` (exported snapshot for hosting)
+- sample: `data/sample/`, then `web/fixtures/`
+
+### Files the dashboard expects (Stream B: `store.ts` / demo `--mode mock` export)
+```
+<dir>/offchain/<sha256>.json        # exactly canonicalize(obj)
+<dir>/index.jsonl                   # {hash, kind, bounty_id?, round?, actor, ts_ms?} per line
+<dir>/strategy/<worker-account>.jsonl  # StrategyChange per line
+<dir>/tx.jsonl                      # {ts, actor, method, args, txHash} per line
+<dir>/chain-state.json              # SAMPLE ONLY: Stream B readChainState() output (or chain-snapshot.json = web ChainSnapshot)
+```
+`ChainSnapshot = { source, generated_ms, config: HubConfig, bounties, bids, treasury, reputation: WorkerView[], activity, supply }`, i.e. the hub views' outputs in one object. Also accepted: `snapshot.json` or `chain.json`.
+
+**Tx linking:** an item gets a nearblocks tx link when `tx.jsonl` has a matching row. Matching uses `method` plus `args`: `post_bounty` by `bounty_id` (or `title`), `place_bid` by `actor` + `bounty_id` + `price_yocto`, `select_winner`/`reject_bid` by `bounty_id` + `bid_id`, `submit_work` by `bounty_id` + `deliverable_hash`, and `verify_bounty` by `bounty_id` + `check_results_hash`. Include `bounty_id` in `post_bounty` args (log the returned id). Every activity-log entry also links to its block (`/blocks/<height>`), so on-chain events are verifiable even without the tx log.
+
+## API routes
+| Route | Returns |
+|---|---|
+| `/api/config` | `{mode, network, rpcUrl, hub, token, explorer, dataSource}` |
+| `/api/snapshot` | The sample ChainSnapshot. Returns 409 in live mode. |
+| `/api/offchain/[hash]` | `{hash, verified, object}`. The server re-hashes the stored object (409 on mismatch, 404 if missing), and the client re-hashes again before showing ✓. |
+| `/api/offchain?bounty_id=&kind=` | Index rows |
+| `/api/strategy`, `/api/strategy/[worker]` | Strategy-change logs |
+| `/api/tx` | Tx log |
+
+## Real verification in the browser
+- **Bid signatures (live):** checked with `verifyBid(signed_payload, signature, signing_pk)` from `get_reputation`, plus a check that the payload names this hub. Sample mode shows the coordinator's recorded verdict instead.
+- **Reports, specs and rationales:** sha256(canonical JSON) is recomputed and compared with the on-chain `check_results_hash` / `spec_hash`.
+- **Mints:** recomputed with `mintAmount(winning price, score, mint_rate)`. `ft_total_supply` is compared with the hub's `total_minted`.
+
+## Wallet
+`NearConnector({ network: "testnet", features: { signAndSendTransaction: true, testnet: true } })` is loaded client-side only (`dynamic(..., { ssr: false })`). "Fund the treasury" signs a real `fund_treasury` FunctionCall (30 TGas plus the deposit) and links the resulting tx. It is disabled until a deployment exists. Wallet testnet support varies; HOT is mainnet-only per its manifest.
+
+## Panels
+`/` shows: stats, the bounty board, treasury (+ fund), bid board and verification for the featured or clicked bounty, the HIVE panel (supply chart and per-mint formula trace), workers (table, margin-over-time chart, strategy reasons), reputation, and the activity feed. `/bounty/[id]` shows: the on-chain record, the acceptance spec, the bid board for all rounds, verification for all rounds, and the activity log filtered to that bounty.
+
+## Hosting note
+On Vercel, API routes read `web/public/offchain/` (Stream B's `exportSnapshot`). `next.config.ts` traces `fixtures/`, `data/sample/` and `config/*.json` into the functions.

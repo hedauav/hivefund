@@ -1,0 +1,12 @@
+{"hash":"cdae5d79f931034a100c6cde4d1f9b2546b7d2118f9fcc4ff03f24f6af1cd9af","kind":"spec","actor":"coordinator.hivefund-2026.testnet","ts_ms":1794283209000}
+{"hash":"b2bfc7f45e280842e6e0482064ca1bb7cf9dc05632ec11db18130447d8d62306","kind":"spec","actor":"coordinator.hivefund-2026.testnet","ts_ms":1794283213000}
+{"hash":"4e3b412e8b9e1d258369ca00634fea458e6bb257dfb7a181486a0611db0c96f3","kind":"selection","bounty_id":0,"round":0,"actor":"coordinator.hivefund-2026.testnet","ts_ms":1794283222000}
+{"hash":"8ba0f60ca95ff6f22c91676c31090020c8fdc99576b5ac986889c466b69551d2","kind":"deliverable","bounty_id":0,"round":0,"actor":"cheap.hivefund-2026.testnet","ts_ms":1794283270000}
+{"hash":"6505e02ba2de523839e5826bb3852af02a36b4f55b871fa2eed5bdf6a3b71345","kind":"report","bounty_id":0,"round":0,"actor":"verifier.hivefund-2026.testnet","ts_ms":1794283275000}
+{"hash":"261f8bbaa030d816af99865cbf36bbc4782d1c1b8bfbcf136349ece3d421c623","kind":"selection","bounty_id":0,"round":1,"actor":"coordinator.hivefund-2026.testnet","ts_ms":1794283282500}
+{"hash":"f25f24a2aa71f40d960f5f6b59d2f94391b56e4931fa0b21d3d0dd9c11440060","kind":"deliverable","bounty_id":0,"round":1,"actor":"adaptive.hivefund-2026.testnet","ts_ms":1794283312500}
+{"hash":"f762acd3e16b55e40852a913bf622a7182fe1aa9a94951b08538677fab62d4b5","kind":"report","bounty_id":0,"round":1,"actor":"verifier.hivefund-2026.testnet","ts_ms":1794283317500}
+{"hash":"9637d5fbe53755aeaf9e25432b7b94b264ea095e46fd8bf6183cfd54a131ca6c","kind":"selection","bounty_id":1,"round":0,"actor":"coordinator.hivefund-2026.testnet","ts_ms":1794283326000}
+{"hash":"dfa961028fafa64c8f7f609a4f7fc65d8ac1d8548165bb63a3c9036d8f3093c5","kind":"deliverable","bounty_id":1,"round":0,"actor":"adaptive.hivefund-2026.testnet","ts_ms":1794283356000}
+{"hash":"24d1a99c2b7cb87b28469eb51111a069add1220851c00c7a77c52f620ead097f","kind":"report","bounty_id":1,"round":0,"actor":"verifier.hivefund-2026.testnet","ts_ms":1794283361000}
+{"hash":"0e9a1f463b6e33684c151a4b3044c5518489a830977ce3aecc205ef18a92b6c3","kind":"spec","actor":"coordinator.hivefund-2026.testnet","ts_ms":1794283366000}

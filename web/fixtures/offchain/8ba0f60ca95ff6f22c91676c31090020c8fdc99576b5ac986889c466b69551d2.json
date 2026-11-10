@@ -1,0 +1,1 @@
+{"bounty_id":0,"code":{"slugify.mjs":"export function slugify(s){return s.toLowerCase().replace(/\\s+/g,'-')}"},"data":{"function_name":"slugify","language":"javascript"},"round":0,"sections":{"approach":"lowercase + replace spaces with dashes","edge_cases":"none","summary":"Basic slugify."},"worker":"cheap.hivefund-2026.testnet"}
