@@ -1,40 +1,44 @@
 # HiveFund demo script (2–3 minutes)
 
 Before recording:
-- Run `npm run demo` on testnet, so the dashboard has real events and every transaction has a nearblocks link.
-- Start the dashboard with `npm run web` and open http://localhost:3000.
-- Keep a nearblocks tab ready for `hub.hivefund-2026.testnet`.
+- Start the dashboard with `npm run web` and open http://localhost:3000. It reads the live testnet contracts, which already hold the recorded run (bounties #0–#3). Running `npm run demo` again adds new bounties and new events.
+- Keep nearblocks tabs ready for `hub.hivefund-2026.testnet` and the transactions below.
 
-Only show what actually happened in the recorded run. If no verification failed in that run, skip beat 5's failure part rather than staging one.
+Show only what actually happened. Every beat below maps to a real transaction from the recorded run (see the README's "What happened in the recorded testnet run").
 
 | # | Time | On screen | Voice-over |
 |---|---|---|---|
 | 1 | 0:00–0:20 | README problem section, then the dashboard header | "Communities want AI agents to do paid work. But who checks the work before money moves, and why do token rewards come from an admin key instead of from results? HiveFund is a bounty market on NEAR where both payment and token supply depend on verified work." |
 | 2 | 0:20–0:45 | Swarm Arena replay at 2×: bounty cards appear on the board, workers walk up and drop bids | "Six agents, each on its own NEAR sub-account with a function-call key limited to its role. The coordinator posts bounties from a spec whose hash is on-chain. The cheap, quality and adaptive workers each decide on their own whether to bid and at what price." |
-| 3 | 0:45–1:05 | Bid board: the forger's bid in red, "invalid bid signature"; click its nearblocks link | "Every bid is signed with a key registered on-chain. The forger signed with the wrong key, so the coordinator rejected it on-chain. The rejection stays in the activity log, it doesn't just disappear." |
-| 4 | 1:05–1:20 | Bid board: the winner highlighted, with the selection rationale scores | "Selection uses a published formula: price, delivery time and on-chain reputation. The full rationale is stored and hashed. No winner is hard-coded." |
-| 5 | 1:20–1:50 | Verification panel: schema ✓, test ✓/✗, NEAR AI rubric table, on-chain hash vs recomputed hash ✓. If the run had a failure, show it: the worker is excluded and the bounty reopens | "The verifier runs the bounty's acceptance test, then a NEAR AI Cloud rubric, and writes a hash of the full report on-chain. The browser recomputes that hash. A failure excludes the worker and reopens the bounty, and two failures refund the treasury." |
-| 6 | 1:50–2:15 | HIVE panel: the mint row traced bounty → bid → score → `units × score / 100 × rate`; supply chart; nearblocks payout and mint txs | "On a pass, the hub pays the winner from escrow and mints HIVE, the only way HIVE can be created. The amount is the winning bid in milliNEAR times the score times the mint rate. The token rejects mints from anyone but the hub, including the owner." |
-| 7 | 2:15–2:35 | Worker panel: adaptive margin-over-time chart and strategy-change reasons; speech bubble in the arena | "The adaptive worker learns. After wins it raises its margin, after losses it cuts it, after a failed verification it raises its quality. Every change is logged with its reason." |
-| 8 | 2:35–2:50 | README testnet table and self-check list | "It's all live on NEAR testnet: sub-accounts, scoped access keys, a NEP-141 token, cross-contract mint callbacks and NEAR AI Cloud inference. The repo has 'do X, see Y' steps to reproduce it." |
+| 3 | 0:45–1:05 | Bid board: the forger's bids in red, "invalid bid signature", and one "tier below min_tier"; open the [forged bid](https://testnet.nearblocks.io/txns/CrZYDzyk7tRJEMXFHoAnr1F4YYh7rdgwJ11XRL6JUs1Y) and its [on-chain rejection](https://testnet.nearblocks.io/txns/FSFeuRkABATYE54XPTWr1xkigA3oSZyvTBqHjhi3XuH4) | "Every bid is signed with a key registered on-chain. The forger signed with the wrong key, so the coordinator rejected it on-chain, and the contract itself refused a bid below the bounty's tier. Rejections stay in the activity log." |
+| 4 | 1:05–1:20 | Bid board for bounty #1: the winner highlighted, with the selection rationale scores | "Selection uses a published formula: price, delivery time and on-chain reputation. The full rationale is stored and hashed. No winner is hard-coded." |
+| 5 | 1:20–1:55 | Bounty #0 (slugify v2): round 0 verification ✗ (adaptive's output was cut off), [reopen tx](https://testnet.nearblocks.io/txns/5bsVDbGxVyYgoooBCaKCpYGMejvNpsRC8qU35YniFabR); round 1 ✗ (quality: 11/37 checks, RangeError on default options), [cancel + refund tx](https://testnet.nearblocks.io/txns/2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW) | "Bounty zero is a production slugify with ten exact rules and a 37-check acceptance test. Two agents won it and both really failed: one ran out of tokens, the other threw on default options. The verifier wrote each failure on-chain, excluded the worker, and after the second failure the contract cancelled the bounty and refunded the treasury. Nobody got paid for broken work." |
+| 6 | 1:55–2:20 | Bounty #1: verification panel (NEAR AI rubric 90, on-chain hash vs recomputed hash ✓), then the HIVE panel mint row: 27 × 90 / 100 × 1e16 = 0.243 HIVE; open the [pass + payout + mint tx](https://testnet.nearblocks.io/txns/J48nSqTgdVx824CD2TUaZ2gVKuZgCErfF5QaGCiS5zKY) | "Bounty one passed with a NEAR AI rubric score of 90. The hub paid the winner from escrow and minted 0.243 HIVE in the same transaction's receipts: the winning bid in milliNEAR, times the score, times the mint rate. Minting is the only way HIVE is created, and the token rejects mints from anyone but the hub." |
+| 7 | 2:20–2:35 | Worker panel: adaptive margin 0.20 → 0.25 → 0.21 and "quality medium → high" with reasons; speech bubble in the arena | "The adaptive worker learns from outcomes: it raised its margin after a win, cut it after a loss, and switched to higher quality after its failed verification. Every change is logged with its reason." |
+| 8 | 2:35–2:50 | README testnet table, on-chain state (1.2079 HIVE supply = total minted) and the self-check list | "It's all live on NEAR testnet: sub-accounts, scoped access keys, a NEP-141 token, cross-contract mint callbacks and NEAR AI Cloud inference. The repo has 'do X, see Y' steps to reproduce it." |
 
-## Draft X post (DRAFT, for the human to post)
+## Draft X thread (DRAFT, for the human to post)
 
-> Agents can do paid work, but who checks it before money moves?
+Post 1 (≤ 280 characters):
+
+> AI agents can do paid work, but who checks it before money moves?
 >
-> HiveFund: AI agents bid on community bounties on @NEARProtocol. A verifier runs the acceptance tests plus a NEAR AI rubric, and only a pass pays out and mints HIVE (supply = bid × score). Forged bids get rejected on-chain.
+> HiveFund: agents bid on community bounties on @NEARProtocol. A verifier runs real acceptance tests + a NEAR AI rubric. Only a pass pays out and mints HIVE.
 >
-> Each agent runs on its own NEAR sub-account with a function-call key limited to its role.
+> Built at NEAR HACKATHON #NEARHackathon 🧵
+
+Post 2 (reply, ≤ 280 characters):
+
+> Each agent has its own NEAR sub-account and a function-call key limited to its role. Forged bids get rejected on-chain; failed work reopens the bounty.
 >
-> Built at NEAR HACKATHON #NEARHackathon
-> Demo: <video link> · Repo: <repo link>
+> Demo: <video link>
+> Repo: <repo link>
 > Feedback welcome!
 
 Checklist:
-- [ ] The draft is about 450 characters. Without long posts on X, split it into a 2-post thread at the blank line before "Each agent…".
-- [ ] The post says "Built at NEAR HACKATHON".
-- [ ] It tags @NEARProtocol and #NEARHackathon.
-- [ ] A video is attached, because the demo is local and judges need to see it run.
+- [ ] Each post is under 280 characters (links count as 23 characters each on X).
+- [ ] Post 1 says "Built at NEAR HACKATHON" and tags @NEARProtocol and #NEARHackathon.
+- [ ] A video is attached to post 1, because the demo runs locally and judges need to see it.
 - [ ] Optionally tag @NearLegion and @NearBuilders.
 - [ ] The repo is public, with a LICENSE file.
 

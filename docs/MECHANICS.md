@@ -60,6 +60,10 @@ Deployed values:
 - treasury funded with 0.5 NEAR;
 - bounties of 0.1 NEAR (slugify) and 0.05 NEAR (sub-account checklist).
 
+Bounty fixtures (`bounties/*.json`):
+- **slugify v2** (0.1 NEAR, tier ≥ 2): a production-grade `slugify(input, {separator, maxLength})` with 10 ordered rules in the spec (transliteration table, NFKD with compatibility forms, apostrophe removal, word splitting, separator option, word-boundary `maxLength`, empty input, idempotency, `TypeError`/`RangeError` on bad input). The acceptance gate `bounties/tests/slugify.test.mjs` runs 37 checks; the rubric then grades the explanation sections.
+- **sub-account security checklist** (0.05 NEAR): no test command, graded only by the NEAR AI rubric against its pass threshold.
+
 The payout transfer is created after the treasury has been debited. The hub pays for its own state from its balance, which includes a 0.2 NEAR buffer.
 
 ## 3. Reputation
@@ -111,9 +115,9 @@ No winner is hard-coded anywhere.
 
 | Worker | Tier | Margin | Speed | Quality | LLM (NEAR AI Cloud) | Token budget | Reads the acceptance test? |
 |---|---|---|---|---|---|---|---|
-| cheap | 1 | 0.05 | 1.6 (slower) | low | `z-ai/glm-5.3-flash` | 900 | no |
+| cheap | 1 | 0.05 | 1.6 (slower) | low | `z-ai/glm-5.3-flash` | 2800 | no |
 | quality | 3 | 0.35 | 0.7 (faster) | high | `deepseek/deepseek-v3.2` | 6000 | yes |
-| adaptive | 2 | starts at 0.20, kept in [0.05, 0.50] | — | medium → high after a failed verification | `NEARAI_MODEL` (flash) | 2500 | no |
+| adaptive | 2 | starts at 0.20, kept in [0.05, 0.50] | — | medium → high after a failed verification | `NEARAI_MODEL` (flash) | 3500 | no |
 
 Models can be overridden with `WORKER_CHEAP_MODEL`, `WORKER_QUALITY_MODEL` and `WORKER_ADAPTIVE_MODEL`.
 
@@ -132,7 +136,8 @@ Models can be overridden with `WORKER_CHEAP_MODEL`, `WORKER_QUALITY_MODEL` and `
 **Deliverables.**
 - With `NEARAI_API_KEY` set, workers generate deliverables through NEAR AI Cloud using strict `json_schema` output with reasoning turned off (`chat_template_kwargs.enable_thinking = false`).
 - Generation is retried once. Code that looks like a placeholder is rejected.
-- After that, the worker falls back to a local template, and the deliverable records `generator.mode` (`llm`, `template` or `failed`) and the model used.
+- If both attempts fail (error, truncated or placeholder output), the worker does **not** substitute template code. It submits a deliverable with `generator.mode: "failed"`, which then fails verification honestly.
+- Local templates are used only when no LLM is configured (`npm run demo:mock` and the unit tests). Every deliverable records `generator.mode` (`llm`, `template` or `failed`) and the model used.
 
 ## 6. Verification
 

@@ -151,10 +151,39 @@ Budgets are the minimum for testnet and can be raised with `scripts/topup.ts`.
 | What | Tx |
 |---|---|
 | Owner calls `verify_bounty` → `ERR_NOT_VERIFIER` (self-check) | [7sdtnTVk…](https://testnet.nearblocks.io/txns/7sdtnTVkZWz5fWzN5VBVYyNJ9MuQTWvGwRYjHdRe9Fb9) |
-| Verification passed + payout + HIVE mint | <!-- TX:verifyPass --> TODO(after live run) |
-| HIVE mint callback | <!-- TX:mint --> TODO(after live run) |
-| Forged bid rejected on-chain (`reject_bid`) | <!-- TX:forgedBidRejected --> TODO(after live run) |
-| Verification failed → bounty reopened | <!-- TX:verifyFail --> TODO(after live run, only if it occurred) |
+| Verification passed → payout + HIVE mint (bounty #1, score 90). The payout transfer, the `hive.mint` call and the `on_mint_complete` callback are receipts of this one tx | <!-- TX:verifyPass --> [J48nSqTg…](https://testnet.nearblocks.io/txns/J48nSqTgdVx824CD2TUaZ2gVKuZgCErfF5QaGCiS5zKY) |
+| Forged bid placed by `forger` (signed with the wrong bid key) | <!-- TX:forgedBidPlaced --> [CrZYDzyk…](https://testnet.nearblocks.io/txns/CrZYDzyk7tRJEMXFHoAnr1F4YYh7rdgwJ11XRL6JUs1Y) |
+| Forged bid rejected on-chain by the coordinator (`reject_bid`, "invalid bid signature") | <!-- TX:forgedBidRejected --> [FSFeuRkA…](https://testnet.nearblocks.io/txns/FSFeuRkABATYE54XPTWr1xkigA3oSZyvTBqHjhi3XuH4) |
+| Verification failed → worker excluded, bounty reopened (bounty #0, round 0) | <!-- TX:verifyFail --> [5bsVDbGx…](https://testnet.nearblocks.io/txns/5bsVDbGxVyYgoooBCaKCpYGMejvNpsRC8qU35YniFabR) |
+| Second failure → bounty cancelled, 0.1 NEAR refunded to the treasury (bounty #0, round 1) | <!-- TX:verifyFailCancelRefund --> [2ehkaS2X…](https://testnet.nearblocks.io/txns/2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW) |
+| Pass after a reopen (bounty #2, testnet e2e run) | <!-- TX:verifyPassAfterReopen --> [GrmRTiub…](https://testnet.nearblocks.io/txns/GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r) |
+| Coordinator and verifier keys re-issued with a 0.1 NEAR allowance (`scripts/topup.ts rekey`) | [DzcrzPtj…](https://testnet.nearblocks.io/txns/DzcrzPtjj9Eq9fZjZfWypYaSX3VomLmyFG5XXE5JMEYf) · [2qWf4DJi…](https://testnet.nearblocks.io/txns/2qWf4DJiBSgWMfaWZ3M53xyDdjM3XCEPhF4k6jFz6EeM) |
+
+### What happened in the recorded testnet run
+
+`npm run demo` on 2026-11-10 sent 23 transactions with 0 failures, with real NEAR AI Cloud calls. Nothing was scripted; outcomes came from the agents.
+
+- **Bounty #0, slugify v2 (0.1 NEAR, tier ≥ 2): cancelled after two real failures.**
+  - Round 0: `adaptive` won. Its LLM output was cut off at its token budget, so it submitted a deliverable marked `generator.mode: "failed"`. Verification failed, `adaptive` was excluded and the bounty reopened.
+  - Round 1: `quality` won. Its code passed 11 of 37 acceptance checks because it threw `RangeError` when called with default options. That was the second failure, so the bounty was cancelled and its 0.1 NEAR went back to the treasury.
+- **Bounty #1, sub-account security checklist (0.05 NEAR): passed.** `quality` won at 0.02782 NEAR, passed with NEAR AI rubric score 90, was paid, and received **0.243 HIVE** (27 milliNEAR units × 90 / 100 × 1e16).
+- **Forged bids:** bids 5 and 9 from `forger` were rejected on-chain by the coordinator for an invalid signature. Bid 6 was rejected by the contract itself: "tier below min_tier".
+- **Adaptive strategy changes** (logged with reasons): margin 0.20 → 0.25 after a win, 0.25 → 0.21 after a loss, and quality medium → high after its failed verification.
+- **`cheap` never won on testnet.** Bounty #0 needs tier 2 and `cheap` is tier 1; on the checklist bounties its bids lost on the selection score.
+- After this run, the cheap and adaptive token budgets were raised (2800 and 3500) because truncation, not the work itself, was failing them. In 3 live smoke runs afterwards, `cheap` passed slugify v2 3/3 (37/37 checks).
+
+`npm run test:testnet` then ran bounty #2 (slugify: `quality` failed, the bounty reopened, `adaptive` won the rebid and passed at score 100 → 0.73 HIVE) and bounty #3 (checklist: passed at score 87 → 0.2349 HIVE).
+
+**On-chain state after the demo and the testnet tests** (views on `hub.hivefund-2026.testnet` and `hive.hivefund-2026.testnet`):
+
+| | Value |
+|---|---|
+| HIVE `ft_total_supply` = hub `total_minted` | 1.2079 HIVE |
+| HIVE earned | `quality` 0.4779, `adaptive` 0.73 |
+| Treasury funded / paid out / refunded / available / escrowed | 0.5 / 0.1287 / 0.1 / 0.3713 / 0 NEAR |
+| Bounties | #0 Cancelled, #1 Completed (90), #2 Completed (100), #3 Completed (87) |
+
+The off-chain records of these runs (specs, deliverables, verification reports, selection rationales, strategy log, tx log) are committed in [`data/testnet-run/`](data/testnet-run/), so every on-chain hash above can be re-checked from the repo.
 
 ## Demo
 
@@ -216,7 +245,7 @@ NEAR Intents and Chain Signatures are not used.
 - **LLM output is nondeterministic.** The same bounty can produce different deliverables and rubric scores across runs. Reports record the model used and whether the rubric ran in `llm` or `fallback` mode.
 - **Fallback rubric.** If NEAR AI is unavailable, the verifier uses a deterministic keyword-coverage heuristic (see `docs/MECHANICS.md`). The report says so, but the heuristic is much weaker than an LLM review.
 - **Small budgets.** Function-call key allowances are 0.05 NEAR, and long runs need `scripts/topup.ts rekey`. The hub pays for its own storage from a 0.2 NEAR buffer.
-- **Hosted dashboard limits.** On a host without the local `data/` folder, the dashboard reads off-chain objects from the exported snapshot in `web/public/offchain/`.
+- **Hosted dashboard limits.** On a host without the local `data/` folder, the dashboard needs the committed export of the recorded run in `data/testnet-run/`.
 
 ## License
 
