@@ -1,6 +1,7 @@
 // Light structural validators for the off-chain objects (isomorphic). Each returns a list of problems.
 import type { BountySpec, Deliverable, VerificationReport } from "./types.ts";
 import { isHash } from "./canonical.ts";
+import { validateProcurement } from "./procurement.ts";
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -36,6 +37,13 @@ export function validateSpec(s: unknown): string[] {
     p.push("budget_yocto must be a positive decimal string");
   if (![1, 2, 3].includes(x.min_tier as number)) p.push("min_tier must be 1, 2 or 3");
   if (typeof x.deadline_minutes !== "number" || x.deadline_minutes <= 0) p.push("deadline_minutes must be > 0");
+  if (x.procurement !== undefined) p.push(...validateProcurement(x.procurement));
+  if (x.selection_weights !== undefined) {
+    const w = x.selection_weights as Partial<Record<"price" | "eta" | "reputation", unknown>>;
+    const vals = [w?.price, w?.eta, w?.reputation];
+    if (vals.some((v) => typeof v !== "number" || v < 0 || v > 1)) p.push("selection_weights.price/eta/reputation must be numbers in 0..1");
+    else if (Math.abs((vals as number[]).reduce((a, b) => a + b, 0) - 1) > 1e-6) p.push("selection_weights must sum to 1");
+  }
   return p;
 }
 

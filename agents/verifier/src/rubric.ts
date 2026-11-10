@@ -71,7 +71,7 @@ export function fallbackRubric(spec: BountySpec, d: Deliverable): RubricResult {
   return { mode: "fallback", model: null, scores, total: weightedTotal(spec, scores), threshold: spec.rubric.pass_threshold };
 }
 
-export async function llmRubric(spec: BountySpec, d: Deliverable, llm: LlmClient): Promise<RubricResult> {
+export async function llmRubric(spec: BountySpec, d: Deliverable, llm: LlmClient, context?: string): Promise<RubricResult> {
   const ids = spec.rubric.criteria.map((c) => c.id);
   const schema = {
     type: "object",
@@ -110,6 +110,7 @@ export async function llmRubric(spec: BountySpec, d: Deliverable, llm: LlmClient
           `Description: ${spec.description}`,
           "Rubric criteria:",
           ...spec.rubric.criteria.map((c) => `- ${c.id} (weight ${c.weight}): ${c.description}`),
+          ...(context ? [context] : []),
           "Deliverable (sections, then data as JSON):",
           body.length > 12_000 ? body.slice(0, 12_000) + "\n[truncated]" : body,
           `Return {"scores":[{"criterion":"<id>","score":<0-100>,"rationale":"..."}]} with exactly one entry for each of: ${ids.join(", ")}.`,
@@ -134,11 +135,24 @@ export async function llmRubric(spec: BountySpec, d: Deliverable, llm: LlmClient
   return { mode: "llm", model: llm.model, scores, total: weightedTotal(spec, scores), threshold: spec.rubric.pass_threshold };
 }
 
-export async function scoreRubric(spec: BountySpec, d: Deliverable, llm: LlmClient | null): Promise<RubricResult> {
-  if (!llm) return fallbackRubric(spec, d);
+export interface RubricExtras {
+  /** extra grounding shown to the LLM grader (procurement: live compliant options) */
+  context?: string;
+  /** deterministic per-criterion overrides for the fallback path (procurement: value score from live prices) */
+  fallbackOverrides?: Record<string, { score: number; rationale: string }>;
+}
+
+function withOverrides(spec: BountySpec, r: RubricResult, o?: RubricExtras["fallbackOverrides"]): RubricResult {
+  if (!o) return r;
+  const scores = r.scores.map((s) => (o[s.criterion] ? { criterion: s.criterion, ...o[s.criterion]! } : s));
+  return { ...r, scores, total: weightedTotal(spec, scores) };
+}
+
+export async function scoreRubric(spec: BountySpec, d: Deliverable, llm: LlmClient | null, extras: RubricExtras = {}): Promise<RubricResult> {
+  if (!llm) return withOverrides(spec, fallbackRubric(spec, d), extras.fallbackOverrides);
   try {
-    return await llmRubric(spec, d, llm);
+    return await llmRubric(spec, d, llm, extras.context);
   } catch (e) {
-    return { ...fallbackRubric(spec, d), llm_error: String((e as Error).message).slice(0, 200) };
+    return { ...withOverrides(spec, fallbackRubric(spec, d), extras.fallbackOverrides), llm_error: String((e as Error).message).slice(0, 200) };
   }
 }

@@ -2,7 +2,7 @@
 // its own bids, decides independently whether to bid on each open bounty, and delivers work for the
 // bounties it won. Nothing here knows (or decides) who wins: the coordinator does that on-chain.
 import { bidPayload, signBid } from "@hivefund/shared";
-import type { Bid, BidStatus, Bounty, BountySpec, Outcome, StrategyChange } from "@hivefund/shared";
+import type { Bid, BidStatus, Bounty, BountySpec, CatalogSource, Outcome, StrategyChange } from "@hivefund/shared";
 import { canProduce, generateDeliverable, type GenerationMode } from "./generate.ts";
 import type { HubLike, LlmClient, StoreLike } from "./ports.ts";
 import { quote, type Quality } from "./pricing.ts";
@@ -31,6 +31,8 @@ export interface WorkerOptions {
   /** NEAR AI Cloud client; null => template fallback only */
   llm?: LlmClient | null;
   bountiesDir?: string;
+  /** procurement bounties: catalog fetcher (default live fetch; mock mode passes the recorded fixture) */
+  catalog?: CatalogSource;
   /** compute floor per job in yoctoNEAR (default 0: no fixed minimum price) */
   minCostYocto?: bigint;
   now?: () => number;
@@ -209,6 +211,8 @@ export class Worker {
       quality: this.strategy.quality,
       llm: this.llm,
       bountiesDir: this.o.bountiesDir,
+      catalog: this.o.catalog,
+      now: this.o.now,
     });
     const hash = await store.put(g.deliverable, { kind: "deliverable", bounty_id: b.id, round: b.round, actor: this.accountId });
     const res = await hub.call(

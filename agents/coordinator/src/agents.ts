@@ -1,7 +1,19 @@
 // Loads the worker and verifier agents (Stream C packages) and adapts them to one tick() shape.
 // Factories receive one merged options object (WorkerOptions-style keys + AgentContext keys) and the
 // returned agent is ticked as tick(hub, store) — agents that take no args simply ignore them.
+import fs from "node:fs";
+import path from "node:path";
+import type { CatalogSource } from "@hivefund/shared";
 import type { AgentContext, Market, WorkerContext, WorkerName } from "@hivefund/shared/node";
+
+/**
+ * Mock (simulation) mode only: procurement catalog lookups read the RECORDED snapshot of the real NEAR AI catalog
+ * (bounties/procurement/fixtures/nearai-models.recorded.json). Testnet runs always fetch the live catalog.
+ */
+export function recordedCatalog(repoRoot: string): CatalogSource {
+  const file = path.join(repoRoot, "bounties", "procurement", "fixtures", "nearai-models.recorded.json");
+  return async () => JSON.parse(fs.readFileSync(file, "utf8"));
+}
 
 export interface TickableAgent {
   name: string;
@@ -28,7 +40,7 @@ function optionsFor(ctx: AgentContext | WorkerContext, mode: Market["mode"]): Re
     ...ctx,
     contract: ctx.contractId,
     // Simulation mode (mock) never calls an LLM. On testnet the agents use NEAR AI when NEARAI_API_KEY is set.
-    ...(mode === "mock" ? { llm: null } : {}),
+    ...(mode === "mock" ? { llm: null, catalog: recordedCatalog(ctx.repoRoot) } : {}),
   };
 }
 

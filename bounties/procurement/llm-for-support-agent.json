@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "title": "Procure the best-value LLM for a NEAR dApp support agent",
+  "description": "We are deploying a customer-support agent for a NEAR dApp. It calls tools (wallet lookups, docs search), must answer in structured JSON, and keeps long chat histories. Recommend ONE real model from the NEAR AI Cloud catalog (https://cloud-api.near.ai/v1/models) for an expected monthly workload of 3M input tokens and 1M output tokens. Hard requirements: supports tools and structured_outputs, context length >= 200000 tokens, text in and text out, and the workload must cost <= 3.00 USD at the catalog's live prices. Quote the catalog prices exactly (USD per 1M tokens), compare against the alternatives you considered, and justify the value for money. This is a recommendation: nobody checks out or pays the vendor.",
+  "deliverable_schema": {
+    "$id": "hivefund:procurement-v1",
+    "type": "object",
+    "required": [
+      "item_id",
+      "source_url",
+      "quoted_pricing",
+      "quoted_workload_cost_usd",
+      "catalog_fetched_at_ms",
+      "considered_count",
+      "alternatives",
+      "justification"
+    ],
+    "properties": {
+      "item_id": { "type": "string", "minLength": 3 },
+      "source_url": { "type": "string", "pattern": "^https://" },
+      "quoted_pricing": {
+        "type": "object",
+        "required": ["input", "output"],
+        "properties": {
+          "input": { "type": "number", "minimum": 0 },
+          "output": { "type": "number", "minimum": 0 }
+        }
+      },
+      "quoted_workload_cost_usd": { "type": "number", "minimum": 0 },
+      "catalog_fetched_at_ms": { "type": "integer", "minimum": 0 },
+      "considered_count": { "type": "integer", "minimum": 1 },
+      "alternatives": {
+        "type": "array",
+        "maxItems": 10,
+        "items": {
+          "type": "object",
+          "required": ["item_id", "workload_cost_usd"],
+          "properties": {
+            "item_id": { "type": "string" },
+            "workload_cost_usd": { "type": "number", "minimum": 0 }
+          }
+        }
+      },
+      "justification": { "type": "string", "minLength": 40 }
+    }
+  },
+  "required_sections": ["summary", "comparison", "recommendation"],
+  "test": null,
+  "rubric": {
+    "criteria": [
+      {
+        "id": "value",
+        "description": "Value for money: compared with the live compliant options under budget, the pick offers strong capability for its workload cost; a much pricier pick needs a convincing capability argument.",
+        "weight": 0.5
+      },
+      {
+        "id": "fit",
+        "description": "Fit for a tool-calling, JSON-answering support agent with long histories, beyond the hard requirements (e.g. reliability of structured output, reasoning needs, latency).",
+        "weight": 0.3
+      },
+      {
+        "id": "justification",
+        "description": "Clear, grounded comparison: quotes real catalog prices and costs, names concrete alternatives, and explains the trade-off without unsupported claims.",
+        "weight": 0.2
+      }
+    ],
+    "pass_threshold": 70
+  },
+  "budget_yocto": "30000000000000000000000",
+  "min_tier": 1,
+  "deadline_minutes": 60,
+  "procurement": {
+    "catalog": "nearai-models",
+    "catalog_url": "https://cloud-api.near.ai/v1/models",
+    "currency": "USD",
+    "product_budget_usd": 3.0,
+    "workload": { "input_mtok": 3, "output_mtok": 1 },
+    "requirements": {
+      "supported_features": ["tools", "structured_outputs"],
+      "min_context_length": 200000,
+      "input_modalities": ["text"],
+      "output_modalities": ["text"]
+    },
+    "price_tolerance_pct": 1,
+    "delivery_check": true
+  }
+}

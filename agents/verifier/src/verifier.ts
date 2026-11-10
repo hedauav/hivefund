@@ -1,6 +1,7 @@
 // Verifier agent: for each bounty in Verifying, load spec + deliverable by hash, run the checks, store the
 // full report off-chain (content-addressed) and record its hash on-chain with verify_bounty.
-import type { Bid, Bounty, BountySpec, Deliverable } from "@hivefund/shared";
+import type { Bid, Bounty, BountySpec, CatalogSource, Deliverable } from "@hivefund/shared";
+import { nearAiDeliveryProbeFromEnv, type DeliveryProbe } from "./procurement.ts";
 import { DEFAULT_BOUNTIES_DIR, nearAiFromEnv, type HubLike, type LlmClient, type StoreLike } from "@hivefund/worker-core";
 import type { Clock } from "./checks.ts";
 import { verify } from "./verify.ts";
@@ -12,6 +13,10 @@ export interface VerifierOptions {
   bountiesDir?: string;
   now?: Clock;
   log?: (msg: string) => void;
+  /** procurement: catalog fetcher (default live; mock passes the recorded fixture) */
+  catalog?: CatalogSource;
+  /** procurement: delivery probe. undefined => from env when an LLM is configured; null => skip */
+  delivery?: DeliveryProbe | null;
 }
 
 export interface VerificationOutcome {
@@ -39,7 +44,10 @@ export class Verifier {
     this.o = o;
     this.accountId = o.accountId;
     this.llm = o.llm === undefined ? nearAiFromEnv({ enableThinking: false }) : o.llm;
+    // The delivery call spends the verifier's own NEAR AI credits, so it only runs when an LLM is configured.
+    this.delivery = o.delivery !== undefined ? o.delivery : this.llm ? nearAiDeliveryProbeFromEnv() : null;
   }
+  private readonly delivery: DeliveryProbe | null;
 
   get rubricMode(): "llm" | "fallback" {
     return this.llm ? "llm" : "fallback";
@@ -81,6 +89,8 @@ export class Verifier {
       specHash: b.spec_hash,
       deliverableHash: b.deliverable_hash!,
       worker: workerId,
+      catalog: this.o.catalog,
+      delivery: this.delivery,
     });
     // The on-chain record is authoritative: bind the report to the bounty/round being verified.
     report.bounty_id = b.id;

@@ -230,6 +230,8 @@ export interface BountySpec {
   deadline_minutes: number;
   /** Present on procurement bounties: "find the best real product under this budget". See procurement.ts. */
   procurement?: ProcurementSpec;
+  /** Poster's selection priorities for this bounty (default DEFAULT_SELECTION_WEIGHTS); must sum to 1. */
+  selection_weights?: SelectionWeights;
 }
 
 /**
@@ -367,7 +369,10 @@ export interface SelectionCandidate {
   worker: AccountId;
   price_yocto: U128;
   eta_ms: number;
+  /** reputation used for scoring (for workers with no history: the cold-start prior, see selection.ts) */
   reputation: number;
+  /** "history" (on-chain reputation) or "cold_start_prior" (worker had no completed/failed bounties yet) */
+  reputation_source?: "history" | "cold_start_prior";
   sig_valid: boolean;
   score: number;
 }

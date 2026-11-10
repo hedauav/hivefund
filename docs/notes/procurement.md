@@ -1,6 +1,6 @@
 # Procurement bounties: interface notes
 
-Status: the interface is fixed. The core implementation (shared helpers, workers, verifier, demo) is in progress. The web and docs agents should build against this file.
+Status: the interface is fixed and the core is implemented: shared helpers, workers, verifier, demo flag and tests.
 
 ## Use case
 
@@ -13,7 +13,7 @@ Status: the interface is fixed. The core implementation (shared helpers, workers
 ## Catalog: NEAR AI Cloud model list
 
 - URL: `GET https://cloud-api.near.ai/v1/models`. Public, no API key.
-- Verified live on 2026-11-11: HTTP 200 with 64 models.
+- Verified live on 2026-11-10: HTTP 200 with 64 models.
 - Each entry has:
   - `id`, `name`
   - `pricing.input` / `pricing.output`: USD per 1M tokens, as numbers
@@ -159,3 +159,44 @@ Old reports have no `procurement` field and must render as before.
 | cheap | Shallow: the LLM sees only the first 12 catalog entries, unfiltered, and picks the first acceptable one | The LLM; they are not re-checked |
 | adaptive | The first 30 entries, pre-filtered by code to compliant ones | Filled from the catalog by code |
 | quality | The whole catalog, pre-filtered to compliant ones, with costs computed | Filled from the catalog by code; the LLM compares value |
+
+## Delivery probe: provider parameter differences
+
+The probe first sends the minimal portable body `{model, messages, max_tokens: 256}`. If the provider answers HTTP 400 about a parameter, it retries once with `max_completion_tokens`.
+
+GLM models (`z-ai/*`) get `chat_template_kwargs: {enable_thinking: false}`. OpenAI models reject that parameter: the first live smoke run failed `openai/gpt-5-nano` with "Unknown parameter: 'chat_template_kwargs'". That was a verifier bug, now fixed.
+
+A call is `ok` when it returns HTTP 200 with usage; the reply text itself isn't graded.
+
+## Why cheap never won: investigation of the recorded testnet run (2026-11-10)
+
+Sources: `data/testnet-run/tx.jsonl`, the on-chain `get_bids` / `get_reputation` views, `agents/shared/src/selection.ts` and the worker's bid decision code.
+
+| Question | Finding |
+|---|---|
+| Did cheap bid? | **Yes, on every bounty it was eligible for.** It placed bids 0 and 7 on #0 (slugify, rounds 0 and 1) and bids 10 and 17 on #2 (slugify, rounds 0 and 1), at 0.0634 NEAR with an ETA of 58 min. No bid decision was skipped by mistake. |
+| Was it ineligible anywhere? | **Yes, on the checklist bounties #1 and #3, by design**: they are `min_tier 2` and cheap is tier 1, so it correctly skipped them. Slugify is `min_tier 1`. |
+| Did the allowance refuse its bids? | **No.** The two "Not enough allowance" refusals were quality and adaptive on #3. Every cheap `place_bid` landed. |
+| Did it lose on the formula? | **Yes, every time.** With price 0.5, ETA 0.2 and reputation 0.3: <br>• ETA is normalized to the slowest bid, so cheap (speed 1.6, always the slowest) always gets **0** on ETA. <br>• Its price discount is small: margin 0.05 vs 0.20 and 0.35 gives 0.0634 vs 0.0725 and 0.0815 N. <br>• #0 round 0, with everyone at reputation 0: cheap 0.183, quality 0.206, **adaptive 0.213** (winner). <br>• #2 round 1 (cheap vs adaptive): cheap 0.183 vs adaptive at least 0.21, before adaptive's reputation term. |
+| Cold start? | **Yes, a real design flaw.** `reputation` comes from completed and failed bounties. A worker that never wins stays at 0 forever, while winners accumulate reputation (quality 7, adaptive 5), so the 0.3 reputation weight widens the gap every round. |
+
+The forger is the adversarial test agent and behaved as designed. All 7 of its bids were rejected and every rejection is in the activity log: `BidRejected` entries for bids 5, 9, 13 and 19 (invalid bid signature, rejected by the coordinator on-chain) and bids 6 and 14 (tier below min_tier, rejected by the contract).
+
+### Fixes (no winner is hardcoded anywhere)
+
+1. **Cold-start prior** (`agents/shared/src/selection.ts`, `COLD_START_PRIOR = 0.5`).
+   - A bidder with **no history** (`completed + failed == 0` on-chain) is scored with reputation = 0.5 × the best reputation among bidders that do have history.
+   - Bidders with history keep their real reputation, so the prior never rewards failures. When nobody has history, everyone stays at 0.
+   - Candidates record `reputation_source: "history" | "cold_start_prior"` in the hash-locked selection rationale.
+   - The coordinator passes `history` from `get_reputation`.
+   - Unit test: `tests/unit/selection-coldstart.test.ts`.
+2. **Per-bounty selection priorities** (`BountySpec.selection_weights`, optional; each weight 0..1 and they must sum to 1).
+   - The poster states what matters for this job, and the coordinator uses it instead of the market default (0.5/0.2/0.3).
+   - The weights used are always in the selection rationale.
+3. **Tier-1 work cheap can compete for:**
+   - The procurement bounty is `min_tier 1`.
+   - New starter bounty `bounties/starter/near-glossary.json`: tier 1, 0.02 N reward, non-urgent and price-sensitive. Its poster weights are price 0.8, ETA 0.0, reputation 0.2.
+   - It is **not** in the default set, so the default demo and its e2e assertions stay unchanged. Post it with `npm run demo -- --bounties starter`. `--bounties` takes a comma-separated list of folders or files under `/bounties`.
+   - Whether cheap actually wins is decided by the formula at run time, and verification still decides whether it gets paid.
+
+Not changed: ETA is still normalized to the slowest bid in the round. This is a deliberate published rule, but it means the slowest bidder always scores 0 on ETA. A future option is to normalize against the bounty deadline instead.

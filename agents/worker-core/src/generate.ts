@@ -9,6 +9,8 @@ import type { BountySpec, Deliverable } from "@hivefund/shared";
 import type { LlmClient } from "./ports.ts";
 import type { Quality } from "./pricing.ts";
 import { templateFor, type TemplateOutput } from "./templates/index.ts";
+import type { CatalogSource } from "@hivefund/shared";
+import { generateProcurement } from "./procurement.ts";
 
 export const DEFAULT_BOUNTIES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../bounties");
 
@@ -21,6 +23,9 @@ export interface GenerateContext {
   quality: Quality;
   llm: LlmClient | null;
   bountiesDir?: string;
+  /** procurement bounties: catalog fetcher (default: live HTTP fetch of spec.procurement.catalog_url) */
+  catalog?: CatalogSource;
+  now?: () => number;
 }
 
 /** Deliverable plus provenance: which generator produced it (hashed with the deliverable, ignored by grading). */
@@ -60,11 +65,13 @@ const LLM_ATTEMPTS = 2;
 const MIN_CODE_CHARS = 40;
 
 export function canProduce(spec: BountySpec, llm: LlmClient | null): boolean {
-  return llm !== null || templateFor(spec.deliverable_schema["$id"]) !== null;
+  // Procurement proposals can always be produced: LLM on live runs, deterministic heuristic in simulation.
+  return llm !== null || spec.procurement !== undefined || templateFor(spec.deliverable_schema["$id"]) !== null;
 }
 
 export async function generateDeliverable(spec: BountySpec, ctx: GenerateContext): Promise<GenerateResult> {
   const base = { bounty_id: ctx.bountyId, round: ctx.round, worker: ctx.worker };
+  if (spec.procurement) return generateProcurementDeliverable(spec, ctx, base);
   let note: string | undefined;
   if (ctx.llm) {
     // One retry: hosted models occasionally return placeholder/elided output ("...").
@@ -102,6 +109,37 @@ export async function generateDeliverable(spec: BountySpec, ctx: GenerateContext
     mode: "failed",
     model: null,
     note,
+  };
+}
+
+async function generateProcurementDeliverable(
+  spec: BountySpec,
+  ctx: GenerateContext,
+  base: { bounty_id: number; round: number; worker: string },
+): Promise<GenerateResult> {
+  const effort = EFFORT[ctx.quality];
+  const pctx = { quality: ctx.quality, llm: ctx.llm, catalog: ctx.catalog, maxTokens: effort.maxTokens, style: effort.style, now: ctx.now };
+  const mode: GenerationMode = ctx.llm ? "llm" : "template";
+  const model = ctx.llm?.model ?? null;
+  const errors: string[] = [];
+  for (let attempt = 1; attempt <= (ctx.llm ? LLM_ATTEMPTS : 1); attempt++) {
+    try {
+      const out = await generateProcurement(spec, pctx);
+      return {
+        deliverable: toDeliverable(base, out, mode, model),
+        mode,
+        model,
+        ...(errors.length ? { note: `succeeded on attempt ${attempt} after: ${errors.join("; ")}` } : ctx.llm ? {} : { note: "simulation heuristic (no LLM)" }),
+      };
+    } catch (e) {
+      errors.push((e as Error).message);
+    }
+  }
+  return {
+    deliverable: { ...base, sections: {}, data: null, generator: { mode: "failed", model } },
+    mode: "failed",
+    model,
+    note: `procurement proposal failed: ${errors.join("; ")}`,
   };
 }
 

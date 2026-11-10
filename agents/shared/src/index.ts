@@ -5,3 +5,4 @@ export * from "./bid.ts";
 export * from "./mint.ts";
 export * from "./spec.ts";
 export * from "./selection.ts";
+export * from "./procurement.ts";

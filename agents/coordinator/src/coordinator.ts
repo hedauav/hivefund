@@ -23,6 +23,8 @@ import type { AgentContext } from "@hivefund/shared/node";
 export interface CoordinatorOptions {
   /** directory with BountySpec *.json fixtures (default <repo>/bounties) */
   bountiesDir?: string;
+  /** explicit fixture files to post instead of every *.json in bountiesDir (demo --bounties) */
+  specFiles?: string[];
   /** select once a bounty has this many valid pending bids in the round (default 3) */
   minBids?: number;
   /** ...or once this long has passed since the round's first bid (default 90 s) */
@@ -53,6 +55,7 @@ export class Coordinator {
     this.accountId = ctx.accountId;
     this.opts = {
       bountiesDir: opts.bountiesDir ?? path.join(ctx.repoRoot, "bounties"),
+      specFiles: opts.specFiles ?? [],
       minBids: opts.minBids ?? 3,
       bidWindowMs: opts.bidWindowMs ?? 90_000,
       weights: opts.weights ?? DEFAULT_SELECTION_WEIGHTS,
@@ -61,6 +64,14 @@ export class Coordinator {
 
   /** BountySpec fixtures from the bounties directory, sorted by file name. */
   loadSpecs(): { file: string; spec: BountySpec }[] {
+    if (this.opts.specFiles.length) {
+      return this.opts.specFiles.map((file) => {
+        const spec = JSON.parse(fs.readFileSync(file, "utf8")) as BountySpec;
+        const problems = validateSpec(spec);
+        if (problems.length) throw new Error(`${file}: ${problems.join("; ")}`);
+        return { file: path.basename(file), spec };
+      });
+    }
     const dir = this.opts.bountiesDir;
     if (!fs.existsSync(dir)) return [];
     return fs
@@ -124,6 +135,18 @@ export class Coordinator {
     return report;
   }
 
+  /** Selection weights for a bounty: the spec's selection_weights if valid, else the coordinator default. */
+  weightsFor(b: Bounty): SelectionWeights {
+    try {
+      const spec = this.ctx.store.get(b.spec_hash) as BountySpec | undefined;
+      const w = spec?.selection_weights;
+      if (w && validateSpec({ ...spec, selection_weights: w }).every((p) => !p.startsWith("selection_weights"))) return w;
+    } catch {
+      /* spec not in this store: use the default */
+    }
+    return this.opts.weights;
+  }
+
   /** Off-chain signature check: the bid payload must be the canonical commitment and be signed by signing_pk. */
   checkSignature(b: Bounty, bid: Bid, worker: WorkerView | undefined): { ok: boolean; why: string } {
     if (!worker) return { ok: false, why: "worker not registered" };
@@ -184,7 +207,9 @@ export class Coordinator {
       return;
     }
 
-    // 3) Score with the published formula; best candidate wins.
+    // 3) Score with the published formula; best candidate wins. The poster's per-bounty priorities
+    //    (spec.selection_weights) apply when present, else the market default.
+    const weights = this.weightsFor(b);
     const candidates = scoreBids(
       [...valid, ...pending.filter((p) => !valid.includes(p))].map((bid) => ({
         bid_id: bid.id,
@@ -192,16 +217,17 @@ export class Coordinator {
         price_yocto: bid.price_yocto,
         eta_ms: bid.eta_ms,
         reputation: workers.get(bid.worker)?.reputation ?? 0,
+        history: workers.has(bid.worker) ? workers.get(bid.worker)!.completed + workers.get(bid.worker)!.failed : 0,
         sig_valid: valid.includes(bid),
       })),
       b.budget_yocto,
-      this.opts.weights,
+      weights,
     );
     const winner = candidates.find((c) => c.sig_valid)!;
     const rationale: SelectionRationale = {
       bounty_id: b.id,
       round: b.round,
-      weights: this.opts.weights,
+      weights,
       candidates,
       winner_bid_id: winner.bid_id,
       rejected,
