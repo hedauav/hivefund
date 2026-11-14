@@ -3,16 +3,17 @@
   "network": "testnet",
   "hub": "hub.hivefund-2026.testnet",
   "token": "hive.hivefund-2026.testnet",
-  "captured_at": "2026-11-14T13:06:55.430Z",
+  "captured_at": "2026-11-14T14:28:03.388Z",
   "runs": [
     "npm run demo (bounties #0, #1)",
     "npm run test:testnet (bounties #2, #3)",
     "npm run demo -- --bounties procurement,starter (bounties #4 procurement, #5 starter glossary)",
-    "npm run procure -- --budget 2 --task \"summarise long support tickets\" --need tools,structured-outputs --min-context 128000 (bounty #6, user-typed procurement request)"
+    "npm run procure -- --budget 2 --task \"summarise long support tickets\" --need tools,structured-outputs --min-context 128000 (bounty #6, user-typed procurement request)",
+    "npm run procure (same \"summarise long support tickets\" request, re-run twice while recording the demo video: bounties #7, #8)"
   ],
-  "offchain_objects": 32,
-  "index_entries": 32,
-  "tx_entries": 79,
+  "offchain_objects": 38,
+  "index_entries": 38,
+  "tx_entries": 93,
   "tx_failed": 8,
   "bounties": [
     0,
@@ -21,7 +22,9 @@
     3,
     4,
     5,
-    6
+    6,
+    7,
+    8
   ],
   "files": {
     "offchain/<sha256>.json": "content-addressed objects (spec, deliverable, report, selection); file bytes = canonical JSON, sha256(bytes) = file name = the on-chain hash",

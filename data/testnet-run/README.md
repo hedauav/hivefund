@@ -7,6 +7,7 @@ Off-chain records of the HiveFund runs on NEAR testnet against `hub.hivefund-202
 - `npm run demo -- --bounties procurement,starter`:
   - #4 procurement, "best-value LLM under $3". Quality picked `openai/gpt-5-nano` ($0.55, the cheapest of 12 live compliant models). The live catalog check passed and the one real delivery call returned HTTP 200. Passed at 90, 0.18 HIVE.
   - #5 starter glossary, price-weighted 0.8/0.0/0.2. Cheap bid with the cold-start prior and scored 0.5672 against quality's 0.5721. Quality won and passed at 94, 0.094 HIVE.
+- `npm run procure` ("summarise long support tickets", budget 2 NEAR) → bounty #6; re-run twice while recording the demo video → bounties #7 and #8 (quality won both, each passed verification at 88).
 
 | Path | Content |
 |---|---|
