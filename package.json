@@ -16,6 +16,7 @@
   "scripts": {
     "demo": "tsx agents/coordinator/src/demo.ts",
     "demo:mock": "tsx agents/coordinator/src/demo.ts --mode mock",
+    "procure": "tsx agents/coordinator/src/procure.ts",
     "agent": "tsx agents/coordinator/src/loop.ts",
     "sample": "tsx agents/coordinator/src/sample.ts",
     "test": "npm -w tests test",
