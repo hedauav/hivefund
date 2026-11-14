@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatHive, mintAmount, HIVE_DECIMALS } from "@hivefund/shared";
 import { useHub } from "@/providers/data-provider";
-import { clock, hive, near } from "@/lib/format";
+import { axisTimeFormatter, clock, hive, near } from "@/lib/format";
 import { Account, BlockLink, Card, Check, Empty, Stat, TxLink } from "./ui";
 
 const toNum = (raw: string) => Number(BigInt(raw) / 10n ** BigInt(HIVE_DECIMALS - 4)) / 1e4;
@@ -27,7 +27,7 @@ export function HivePanel() {
   const live = config?.mode === "live";
 
   return (
-    <Card id="hive" n="05" title="HIVE supply" subtitle="minted by the hub on a verified pass; there is no admin mint">
+    <Card id="hive" n="05" title="HIVE supply" subtitle="minted only by the hub, on a verified pass (the owner can still change the minter and mint rate)">
       <div className="grid gap-3 sm:grid-cols-3 [&>*]:min-w-0">
         <Stat label="Total minted (hub)" value={hive(totalMinted, 2)} hint={`${supply.length} mint event${supply.length === 1 ? "" : "s"}`} />
         <Stat
@@ -61,7 +61,7 @@ export function HivePanel() {
                   dataKey="t"
                   type="number"
                   domain={["dataMin", "dataMax"]}
-                  tickFormatter={(t: number) => new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                  tickFormatter={axisTimeFormatter(data.map((d) => d.t))}
                   stroke="var(--muted)"
                   fontSize={11}
                   tickLine={false}

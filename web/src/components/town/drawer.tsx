@@ -19,7 +19,7 @@ const BLURB: Record<BuildingId, string> = {
   hall: "The coordinator checks each bid's signature against the worker's on-chain key, scores the valid ones and stamps a winner. Its reasoning is stored off-chain and its hash sits on-chain.",
   lab: "Automated checks run first, then the rubric. The report is hashed; this page re-hashes it and compares with the chain.",
   vault: "NEAR held by the hub contract: escrowed per bounty, paid out only after a verified pass.",
-  mint: "HIVE is minted by the hub alone, on a verified pass: winning bid × score × rate. There is no admin mint.",
+  mint: "HIVE is minted by the hub alone, on a verified pass: winning bid × score × rate. No one else can call mint; the owner can still change the minter and mint rate.",
   "house-cheap": "Lowest margin, quickest model, doesn't read the acceptance test.",
   "house-quality": "Higher margin, strongest model, reads the full test before it builds.",
   "house-adaptive": "Learns from its last five outcomes and changes its margin and effort — every change is logged with a reason.",

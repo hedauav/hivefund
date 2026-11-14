@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { StrategyChange } from "@hivefund/shared";
 import { useHub } from "@/providers/data-provider";
-import { clock, hive, near, timeAgo, workerRole } from "@/lib/format";
+import { axisTimeFormatter, clock, hive, near, timeAgo, workerRole } from "@/lib/format";
 import { Account, Card, Chip, Empty } from "./ui";
 
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
@@ -100,7 +100,7 @@ export function WorkerPanel() {
                     dataKey="t"
                     type="number"
                     domain={["dataMin", "dataMax"]}
-                    tickFormatter={(t: number) => new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                    tickFormatter={axisTimeFormatter(chart.data.map((d) => d.t))}
                     stroke="var(--muted)"
                     fontSize={11}
                     tickLine={false}
