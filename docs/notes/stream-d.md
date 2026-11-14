@@ -102,3 +102,16 @@ On Vercel, API routes read `web/public/offchain/` (Stream B's `exportSnapshot`).
 - Boards: a small crate "procurement" tag on bounty rows and the bid board title.
 - Arena: procurement cards carry a crate icon; Verification captions use the report linked by `checks <hash>` in the activity detail, e.g. "re-fetched the live price of X: $0.55 ≤ budget $3 ✓; quote matches ✓; requirements ✓".
 - `/preview/procurement`: a FIXTURE story (clearly bannered, illustrative values) for design work before a real run. Available in `next dev`; 404 in production builds unless `NEXT_PUBLIC_SHOW_PREVIEW=1`. Real procurement bounties render from on-chain hashes on `/` and `/bounty/[id]`.
+
+## Town redesign (Nov 14)
+
+The home page hero is now an isometric pixel town (`web/src/components/town/`), replacing the arena.
+
+- `world.ts` — island layout, iso projection, scanline raster helpers, buildings/trees painted with crisp `fillRect` rows (no engine, no image assets). Day and dusk palettes follow the theme.
+- `people.ts` — six 7×12 villager sprites (coordinator top hat, verifier lab coat, cheap straw hat, quality spectacles, adaptive antenna hood, forger cloak + red mask).
+- `town.tsx` — canvas at an integer scale (2–5×, 30 fps, paused off-screen / tab hidden); villagers walk the painted roads via the plaza. Driven only by `arena/model.ts` (the same reducer over `get_activity_log` + strategy logs), which now also records a `Station` per agent. Board notices = bounties (status colour, crate tag for procurement, bid pins), lab flask turns green/red on verdicts, vault coin stack ∝ treasury available, mint pile ∝ HIVE supply, chimney puffs on mints, forger slips burn on `BidRejected`. HTML overlay: roof name plates, villager tags, strategy bubbles, PASS/FAIL/WON/+amount pops. Bottom "crier": play/pause, 1×/2×/4×, replay, follow-live, caption + nearblocks block link.
+- `drawer.tsx` — click a building → ledger drawer with the existing real panels (Job Board → bounties + bids; Hall → bid scoring; Lab → verification/procurement evidence; Vault → treasury + reputation; Mint → HIVE; houses/shack → per-worker record, bids, strategy changes). Esc / scrim closes, focus returns.
+- Reduced motion: a still town redrawn every 0.5 s plus a numbered event list.
+- The full ledger sections stay below the town.
+- `lib/rpc.ts` now fails over browser view calls (fastnear → drpc → rpc.testnet.near.org) because a rate-limited fastnear answers without CORS headers.
+- Fonts: Jersey 10 (headings), Silkscreen (labels), Atkinson Hyperlegible (UI), IBM Plex Mono (hashes). Palette: meadow / parchment / timber with honey, roof terracotta, pond blue; dusk variant.
