@@ -27,6 +27,7 @@ pub const ERR_ZERO_BUDGET: &str = "ERR_TREASURY_INSUFFICIENT: budget must be > 0
 pub const ERR_OVERFLOW: &str = "ERR_OVERFLOW";
 pub const ERR_NO_PENDING_MINT: &str = "ERR_NO_PENDING_MINT";
 pub const ERR_MINT_IN_FLIGHT: &str = "ERR_BAD_STATUS: mint already in flight";
+pub const ERR_CONFIG_LOCKED: &str = "ERR_CONFIG_LOCKED";
 
 /// `place_bid` business-rule rejections: stored as `Rejected` bids, never panics.
 pub const REJECT_CLOSED: &str = "bounty closed";

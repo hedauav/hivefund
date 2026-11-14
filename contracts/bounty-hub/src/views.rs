@@ -83,6 +83,10 @@ impl BountyHub {
         page(&self.supply, from_index, limit, 100)
     }
 
+    pub fn is_config_locked(&self) -> bool {
+        self.config_locked
+    }
+
     pub fn get_pending_mints(&self) -> Vec<PendingMint> {
         self.pending_mints.values().cloned().collect()
     }

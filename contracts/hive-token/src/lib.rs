@@ -1,8 +1,9 @@
 //! HIVE — NEP-141 community token of HiveFund.
 //!
 //! The ONLY way to create HIVE is `mint`, callable only by the bounty-hub contract (`minter`),
-//! which mints from verified bounty outcomes. There is no admin mint: the owner can only hand
-//! the minter role over (`set_minter`), e.g. to a new hub version.
+//! which mints from verified bounty outcomes. The owner cannot mint, but can hand the minter
+//! role over (`set_minter`), e.g. to a new hub version — until the owner calls the one-way
+//! `lock_config()`, after which `set_minter` panics with `ERR_CONFIG_LOCKED` forever.
 //!
 //! TODO(decay, cut #2): lazy inactivity decay — `last_active_ms: LookupMap<AccountId, u64>`
 //! updated on mint/transfer/receive, `poke_decay(account_id)` burning
@@ -28,6 +29,7 @@ use near_sdk::{
 pub const ERR_NOT_MINTER: &str = "ERR_NOT_MINTER";
 pub const ERR_NOT_OWNER: &str = "ERR_NOT_OWNER";
 pub const ERR_ZERO_AMOUNT: &str = "ERR_ZERO_AMOUNT";
+pub const ERR_CONFIG_LOCKED: &str = "ERR_CONFIG_LOCKED";
 
 const HIVE_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,5 90,27 90,73 50,95 10,73 10,27' fill='%23f5b301' stroke='%23222' stroke-width='6'/%3E%3Ctext x='50' y='62' font-size='34' text-anchor='middle' font-family='Arial' font-weight='bold' fill='%23222'%3EH%3C/text%3E%3C/svg%3E";
 
@@ -45,6 +47,8 @@ pub struct HiveToken {
     metadata: LazyOption<FungibleTokenMetadata>,
     owner: AccountId,
     minter: AccountId,
+    /// One-way: once true, `set_minter` is disabled forever (see `lock_config`).
+    config_locked: bool,
 }
 
 #[near]
@@ -66,6 +70,7 @@ impl HiveToken {
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             owner: owner_id,
             minter: minter_id,
+            config_locked: false,
         }
     }
 
@@ -91,12 +96,34 @@ impl HiveToken {
     }
 
     /// Owner hands the minter role to another account (hub upgrade). Not a mint path.
+    /// Disabled forever once `lock_config` has been called.
     pub fn set_minter(&mut self, minter_id: AccountId) {
         if env::predecessor_account_id() != self.owner {
             env::panic_str(ERR_NOT_OWNER);
         }
+        if self.config_locked {
+            env::panic_str(ERR_CONFIG_LOCKED);
+        }
         log!("minter changed from {} to {}", self.minter, minter_id);
         self.minter = minter_id;
+    }
+
+    /// Owner-only, one-way: freezes the minter role. After this, `set_minter` panics with
+    /// `ERR_CONFIG_LOCKED` and nobody (including the owner) can ever change who may mint.
+    /// Calling it a second time also panics with `ERR_CONFIG_LOCKED` (no silent no-op).
+    pub fn lock_config(&mut self) {
+        if env::predecessor_account_id() != self.owner {
+            env::panic_str(ERR_NOT_OWNER);
+        }
+        if self.config_locked {
+            env::panic_str(ERR_CONFIG_LOCKED);
+        }
+        self.config_locked = true;
+        log!("config locked: minter permanently fixed to {}", self.minter);
+    }
+
+    pub fn is_config_locked(&self) -> bool {
+        self.config_locked
     }
 
     pub fn get_minter(&self) -> AccountId {
@@ -300,6 +327,59 @@ mod tests {
         let mut t = setup();
         testing_env!(ctx(hub()).build());
         t.set_minter(hub());
+    }
+
+    #[test]
+    fn lock_config_freezes_minter_but_hub_still_mints() {
+        let mut t = setup();
+        assert!(!t.is_config_locked());
+        // before lock: owner can change config
+        testing_env!(ctx(accounts(0)).build());
+        t.set_minter(accounts(4));
+        t.set_minter(hub());
+        t.lock_config();
+        assert!(t.is_config_locked());
+        assert!(get_logs().iter().any(|l| l.contains("config locked")));
+        // after lock: hub mint still works
+        testing_env!(ctx(hub()).build());
+        t.mint(accounts(1), U128(7));
+        assert_eq!(t.ft_balance_of(accounts(1)).0, 7);
+        assert_eq!(t.get_minter(), hub());
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_CONFIG_LOCKED")]
+    fn set_minter_panics_after_lock() {
+        let mut t = setup();
+        testing_env!(ctx(accounts(0)).build());
+        t.lock_config();
+        t.set_minter(accounts(4));
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_CONFIG_LOCKED")]
+    fn lock_config_twice_panics() {
+        let mut t = setup();
+        testing_env!(ctx(accounts(0)).build());
+        t.lock_config();
+        t.lock_config();
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_NOT_OWNER")]
+    fn non_owner_cannot_lock_config() {
+        let mut t = setup();
+        testing_env!(ctx(hub()).build());
+        t.lock_config();
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_NOT_MINTER")]
+    fn non_hub_mint_still_panics_after_lock() {
+        let mut t = setup();
+        testing_env!(ctx(accounts(0)).build());
+        t.lock_config();
+        t.mint(accounts(0), U128(1));
     }
 
     #[test]

@@ -256,6 +256,74 @@ fn set_mint_rate_owner_only() {
     assert_eq!(hub.get_config().mint_rate.0, 5);
 }
 
+// ------------------------------------------------------------------ lock_config
+
+#[test]
+fn lock_config_freezes_mint_rate() {
+    let mut hub = setup();
+    assert!(!hub.is_config_locked());
+    as_caller(&owner());
+    // before lock: owner can change config
+    hub.set_mint_rate(U128(5));
+    hub.set_mint_rate(U128(RATE));
+    hub.lock_config();
+    assert!(hub.is_config_locked());
+    assert_eq!(hub.get_config().mint_rate.0, RATE);
+    let last = hub.get_activity_log(None, Some(1000)).pop().unwrap();
+    assert_eq!(last.kind, ActivityKind::RoleChanged);
+    assert!(last.detail.contains("config locked"));
+}
+
+#[test]
+#[should_panic(expected = "ERR_CONFIG_LOCKED")]
+fn set_mint_rate_panics_after_lock() {
+    let mut hub = setup();
+    as_caller(&owner());
+    hub.lock_config();
+    hub.set_mint_rate(U128(5));
+}
+
+#[test]
+#[should_panic(expected = "ERR_CONFIG_LOCKED")]
+fn lock_config_twice_panics() {
+    let mut hub = setup();
+    as_caller(&owner());
+    hub.lock_config();
+    hub.lock_config();
+}
+
+#[test]
+#[should_panic(expected = "ERR_NOT_OWNER")]
+fn non_owner_cannot_lock_config() {
+    let mut hub = setup();
+    as_caller(&coord());
+    hub.lock_config();
+}
+
+#[test]
+fn hub_still_mints_after_lock() {
+    let mut hub = setup();
+    as_caller(&owner());
+    hub.lock_config();
+    let (b, _) = to_verifying(&mut hub);
+    as_caller(&verifier());
+    let r = hub.verify_bounty(b, true, 80, h('c'));
+    assert!(matches!(r, PromiseOrValue::Promise(_)));
+    drop(r);
+    let pm = hub.get_pending_mints();
+    assert_eq!(pm.len(), 1);
+    assert_eq!(pm[0].amount.0, 4 * 10u128.pow(18));
+    let receivers: Vec<String> = get_created_receipts()
+        .iter()
+        .map(|r| r.receiver_id.to_string())
+        .collect();
+    assert!(receivers.contains(&"hive.testnet".to_string()));
+    // callback records the mint as usual
+    as_callback(PromiseResult::Successful(vec![]));
+    hub.on_mint_complete(b, cheap(), pm[0].amount, pm[0].bid_units, 80, Ok(()));
+    assert_eq!(hub.get_config().total_minted.0, 4 * 10u128.pow(18));
+}
+
 // ------------------------------------------------------------------ post_bounty
 
 #[test]

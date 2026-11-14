@@ -76,6 +76,10 @@ pub struct BountyHub {
     /// Bounty ids whose mint promise has been issued and whose callback has not run yet.
     /// Guards `retry_mint` against double-minting.
     mints_in_flight: LookupSet<u64>,
+    /// One-way: once true, `set_mint_rate` is disabled forever (see `lock_config`).
+    /// NOTE: adding this field changes the borsh state layout — v0.1 deployments cannot be
+    /// upgraded in place; deploy to fresh accounts (see DEPLOY_PLAN.md).
+    config_locked: bool,
 }
 
 // ---------------------------------------------------------------- helpers (not exported)
@@ -317,6 +321,7 @@ impl BountyHub {
             supply: Vector::new(StorageKey::Supply),
             pending_mints: IterableMap::new(StorageKey::PendingMints),
             mints_in_flight: LookupSet::new(StorageKey::MintsInFlight),
+            config_locked: false,
         }
     }
 
@@ -431,8 +436,12 @@ impl BountyHub {
         );
     }
 
+    /// Owner-only. Disabled forever once `lock_config` has been called.
     pub fn set_mint_rate(&mut self, mint_rate: U128) {
         self.assert_owner();
+        if self.config_locked {
+            env::panic_str(ERR_CONFIG_LOCKED);
+        }
         self.mint_rate = mint_rate.0;
         self.log_activity(
             ActivityKind::RoleChanged,
@@ -440,6 +449,26 @@ impl BountyHub {
             None,
             None,
             format!("mint_rate = {}", mint_rate.0),
+        );
+    }
+
+    /// Owner-only, one-way: freezes the mint configuration. After this, `set_mint_rate`
+    /// panics with `ERR_CONFIG_LOCKED`; the hub has no setter for `hive_token`, so the mint
+    /// formula and mint target are then fixed forever. Role management (coordinator,
+    /// verifier, workers) is deliberately NOT locked — it cannot create HIVE on its own.
+    /// Calling it a second time also panics with `ERR_CONFIG_LOCKED`.
+    pub fn lock_config(&mut self) {
+        self.assert_owner();
+        if self.config_locked {
+            env::panic_str(ERR_CONFIG_LOCKED);
+        }
+        self.config_locked = true;
+        self.log_activity(
+            ActivityKind::RoleChanged,
+            None,
+            None,
+            None,
+            format!("config locked: mint_rate permanently {}", self.mint_rate),
         );
     }
 
