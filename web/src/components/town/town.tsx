@@ -49,6 +49,17 @@ function hitBox(id: BuildingId) {
   return { x: lx - 2, y: top, w: rx - lx + 4, h: bottom - top };
 }
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
+const ROOF: Record<BuildingId, number> = { board: 0, hall: 11, lab: 12, vault: 16, mint: 14, "house-cheap": 8, "house-quality": 8, "house-adaptive": 15, shack: 4 };
+/** Name plates hang just above each roof. */
+function plateAt(id: BuildingId): XY {
+  const b = byId[id];
+  if (id === "board") {
+    const [x, y] = iso(b.gx + 1, b.gy + 0.5);
+    return [x, y - 26];
+  }
+  const [x, y] = iso(b.gx + b.w / 2, b.gy + b.d / 2);
+  return [x, y - b.h - ROOF[id] - 3];
+}
 
 const NOTICE = (slot: number): XY => {
   const [x, y] = iso(9, 8.5);
@@ -398,8 +409,9 @@ export function Town({ onOpen }: { onOpen: (id: BuildingId, bounty?: number) => 
         for (let i = 0; i < 6 - row && k < L.hive; i++, k++) {
           const x = x0 - 12 + i * 4 + row * 2;
           const y = y0 - row * 3;
-          px(c, x, y, 4, 3, pal.ink);
-          px(c, x + 1, y, 2, 2, (i + row) % 2 ? "#F0B74E" : "#E1A43A");
+          px(c, x, y, 4, 3, (i + row) % 2 ? "#F0B74E" : "#E1A43A");
+          px(c, x, y + 2, 4, 1, "#B8802A");
+          px(c, x + 1, y, 1, 1, "#FFE3A0");
         }
     }
     if (id === "hall") {
@@ -440,17 +452,21 @@ export function Town({ onOpen }: { onOpen: (id: BuildingId, bounty?: number) => 
           <canvas ref={canvasRef} width={W} height={H} className="town-canvas" style={{ width: W * scale, height: H * scale }} aria-hidden />
           {BUILDINGS.map((b) => {
             const r = hitBox(b.id);
+            const [lx, ly] = plateAt(b.id);
+            const minor = b.id.startsWith("house") || b.id === "shack";
             return (
-              <button
-                key={b.id}
-                type="button"
-                className="town-hit"
-                style={{ left: pct(r.x, W), top: pct(r.y, H), width: pct(r.w, W), height: pct(r.h, H) }}
-                onClick={() => onOpen(b.id)}
-                aria-label={`Open the ${b.label} ledger`}
-              >
-                <span className={`town-plate${b.id.startsWith("house") || b.id === "shack" ? " small" : ""}`}>{b.label}</span>
-              </button>
+              <div key={b.id} className={`town-bld${minor ? " minor" : ""}`}>
+                <button
+                  type="button"
+                  className="town-hit"
+                  style={{ left: pct(r.x, W), top: pct(r.y, H), width: pct(r.w, W), height: pct(r.h, H) }}
+                  onClick={() => onOpen(b.id)}
+                  aria-label={`Open the ${b.label} ledger`}
+                />
+                <span className="town-plate" style={{ left: pct(lx, W), top: pct(ly, H) }} aria-hidden>
+                  {b.label}
+                </span>
+              </div>
             );
           })}
           {ROLES.map((r) => (

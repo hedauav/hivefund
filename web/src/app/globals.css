@@ -245,20 +245,21 @@ body {
 }
 .town-hit {
   position: absolute;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  z-index: 1;
   background: transparent;
   border: 2px dashed transparent;
   cursor: pointer;
 }
 .town-hit:hover,
 .town-hit:focus-visible {
-  border-color: rgb(255 248 230 / 0.85);
+  border-color: rgb(255 248 230 / 0.9);
   outline: none;
 }
 .town-plate {
-  transform: translateY(-115%);
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
   white-space: nowrap;
   font-family: var(--font-pixel);
   font-size: 10px;
@@ -269,18 +270,29 @@ body {
   border: 2px solid #4a3322;
   box-shadow: 0 2px 0 #4a3322;
 }
-.town-plate.small {
+.town-bld:has(.town-hit:hover) .town-plate,
+.town-bld:has(.town-hit:focus-visible) .town-plate {
+  background: #e1a43a;
+}
+/* houses only name themselves when pointed at; their villagers' tags already say who lives there */
+.town-bld.minor .town-plate {
+  display: none;
   font-size: 8px;
   padding: 3px 4px 2px;
-  opacity: 0.92;
 }
-.town-hit:hover .town-plate,
-.town-hit:focus-visible .town-plate {
-  background: #e1a43a;
+.town-bld.minor:has(.town-hit:hover) .town-plate,
+.town-bld.minor:has(.town-hit:focus-visible) .town-plate {
+  display: block;
+}
+@media (max-width: 640px) {
+  .town-plate {
+    font-size: 8px;
+    padding: 3px 4px 2px;
+  }
 }
 .town-tag {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
