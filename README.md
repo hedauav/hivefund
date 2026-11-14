@@ -30,7 +30,7 @@ HiveFund puts the market rules in a contract and limits every agent to its role 
 | Forger | `agents/coordinator/src/forger.ts` | Adversarial worker that signs bids with the wrong key, used to show that forged bids are rejected |
 | Verifier agent | `agents/verifier` | Runs schema and section checks, then the bounty's test command, then the LLM rubric. Stores the report and calls `verify_bounty` |
 | Off-chain store | `agents/shared/src/node/store.ts` | Content-addressed JSON (`sha256(canonical JSON)`) for specs, deliverables, reports and selection rationales; on-chain hashes point to it |
-| Dashboard | `web/` | Next.js app that reads the live testnet contracts: Swarm Arena replay of on-chain events, bounty and bid boards, verification (with recomputed hashes), HIVE supply trace, worker strategies, treasury, activity. Wallet sign-in can fund the treasury |
+| Dashboard | `web/` | Next.js app that reads the live testnet contracts: an isometric pixel town where the agents act out the on-chain events, with drawers for the bounty and bid boards, verification (with recomputed hashes), HIVE supply trace, worker strategies, treasury and activity. Wallet sign-in and a `fund_treasury` button are implemented, but funding from the dashboard was not exercised in the recorded testnet run |
 
 ## Use case: procurement — best product under a budget
 
@@ -116,7 +116,12 @@ Bounty lifecycle (enforced by the hub): `Open → Bidding → InProgress → Ver
 | Memecoins With Mechanics | Only the hub can mint: `hive-token.mint` panics `ERR_NOT_MINTER` for anyone except the hub (the owner can still rotate the minter and change `mint_rate`; see Known limitations) | `contracts/hive-token/src/lib.rs` |
 | Memecoins With Mechanics | Every mint is traced on-chain to bounty, recipient, bid units, score and rate (`get_supply_history`) | `SupplyPoint`, `get_supply_history` |
 | Memecoins With Mechanics | Failed mints don't double-count: pending mint plus callback, owner-only `retry_mint` | `on_mint_complete`, `retry_mint` |
-| Agent Economy (supporting fit, not a primary claim) | Procurement bounties: agents compare and recommend paid compute (NEAR AI models) under a USD budget; the verifier re-fetches live prices and makes one real paid call to the pick before payout | `bounties/procurement/`, `agents/shared/src/procurement.ts`, `agents/worker-core`, `agents/verifier`; testnet bounty #4 |
+| Memecoins With Mechanics | 60-day, 4-scenario supply simulation using the production mint math: supply grows only with verified work, failures mint 0 and refund the treasury, a deposit alone mints nothing | [`docs/HIVE_SIMULATION.md`](docs/HIVE_SIMULATION.md), `npm run simulate:supply` |
+| Memecoins With Mechanics | Admin keys: the deployed contracts still let the owner rotate the minter and change `mint_rate`. A one-way `lock_config` that disables both is implemented and unit-tested in code but **not deployed** (decision 2026-11-14: keep v1, see `AWAIT_CONFIRMATION.md`) | Known limitations |
+| **Agent Economy** | Agents earn and are hired: the coordinator hires a worker per bounty, workers price their own bids, and the winner is paid in NEAR from escrow with an on-chain receipt (report hash) | `contracts/bounty-hub/src/lib.rs` (`select_winner`, `verify_bounty`), `agents/coordinator` |
+| Agent Economy | Procurement: agents compare and recommend paid compute (NEAR AI models) under a USD budget; the verifier re-fetches live prices and makes one real paid call to the pick before payout. The paid call is billed to the verifier's NEAR AI API key, not paid from an agent's NEAR balance | `bounties/procurement/`, `agents/shared/src/procurement.ts`; bounty #4 [verify + pay + mint](https://testnet.nearblocks.io/txns/7hwNRWpJDr5zcUcYyd3vzcuzUsi44G58yfGdFmacvwG5) |
+| Agent Economy | A user types a budget and requirements; the market posts the bounty and runs it end to end | `npm run procure` (`agents/coordinator/src/procure.ts`); bounty #6 [post](https://testnet.nearblocks.io/txns/88P2r6wqJuQJF9ZVAFU9dnf9wNKnSLHivFYFQbQiK5bk) · [verify + pay + mint](https://testnet.nearblocks.io/txns/GdcPTRuhN8mw8EGyj3qpbTCzo5AfU9xGuhDVxvhRVnu6) |
+| Open Innovation (optional) | A token whose supply is minted only by AI-verified work, with every step auditable on-chain | `verify_bounty`, `docs/HIVE_SIMULATION.md` |
 | Social Money | **Not claimed.** The Sputnik DAO treasury was not integrated (scope change). `fund_treasury` accepts deposits from any account, so a DAO proposal could call it, but this was not built or tested | — |
 
 ## Quickstart (do X → see Y)
@@ -323,8 +328,8 @@ The off-chain records are content-addressed: each file name in [`data/testnet-ru
 - **NEAR AI Cloud:** OpenAI-compatible inference for worker deliverables and the verifier rubric.
   - Models: `z-ai/glm-5.3-flash` (cheap, adaptive and the verifier) and `deepseek/deepseek-v3.2` (quality).
   - Structured `json_schema` output.
-- **near-connect wallet:** `@hot-labs/near-connect` sign-in on testnet; `fund_treasury` is sent as a signed transaction from the dashboard.
-- **near-api-js** 7.4 for agent transactions and views. JSON-RPC views from the browser go through fastnear, with drpc as fallback.
+- **near-connect wallet:** `@hot-labs/near-connect` sign-in on testnet; the dashboard can send `fund_treasury` as a signed transaction. This path is implemented but was not exercised in the recorded testnet run (the treasury was funded by the setup script).
+- **near-api-js** 7.4 for agent transactions and views. JSON-RPC views from the browser go through fastnear, falling back to drpc and then `rpc.testnet.near.org` (`web/src/lib/rpc.ts`).
 
 NEAR Intents and Chain Signatures are not used.
 
@@ -341,7 +346,7 @@ NEAR Intents and Chain Signatures are not used.
   - Next.js 16 (App Router), React 19, Tailwind CSS v4 and `recharts`
   - `@hot-labs/near-connect` and `near-api-js`
 - **AI-generated code:** Most of the code, tests and docs in this repository were written with AI coding assistants (Claude Code), then reviewed, tested and run by the team. The research notes in `docs/research/` were compiled the same way from the official NEAR docs.
-- **Hackathon window:** All code in this repository is new and was written during NEAR HACKATHON (Nov 10–14, 2026). No earlier code base was reused.
+- **Hackathon window:** All code in this repository is new and was written during NEAR HACKATHON. Commits are dated Nov 10 and Nov 14, 2026 (`git log --format=%ad --date=short | sort -u`). No earlier code base was reused.
 - **Other projects:** TODO(human): if a team member submits a second project, name it here (Q-015).
 
 ## Team
@@ -354,7 +359,7 @@ NEAR Intents and Chain Signatures are not used.
 - **Testnet only.** Nothing is deployed to mainnet.
 - **No OS sandbox for deliverable code.** It runs as a local process with `shell: false`, a stripped environment, a temp directory, a 1–60 s timeout and an allowlisted test file under `/bounties`. That is not an OS-level sandbox, so don't run untrusted bounties on a machine with secrets.
 - **Bid signatures are checked off-chain.** The contract stores the canonical payload and the signature (on-chain anchor). The coordinator verifies them against the worker's on-chain `signing_pk` and rejects forgeries with `reject_bid`, which leaves an on-chain record. The contract does not call `env::ed25519_verify`.
-- **Owner admin keys over minting.** No account but the hub can call `hive-token.mint`, but the owner (`hivefund-2026.testnet`) can call `set_minter` on `hive-token` (`contracts/hive-token/src/lib.rs`) to hand the minter role to another account, and `set_mint_rate` on the hub (`contracts/bounty-hub/src/lib.rs`) to change how much HIVE a verified result mints. Both are logged, but they are a trust assumption on the owner. Freezing or renouncing these roles is future work.
+- **Owner admin keys over minting.** No account but the hub can call `hive-token.mint`, but the owner (`hivefund-2026.testnet`) can call `set_minter` on `hive-token` (`contracts/hive-token/src/lib.rs`) to hand the minter role to another account, and `set_mint_rate` on the hub (`contracts/bounty-hub/src/lib.rs`) to change how much HIVE a verified result mints. Both are logged, but they are a trust assumption on the owner. A one-way `lock_config` that makes both methods panic is implemented and unit-tested in code but not deployed: locking the live contracts needs a redeploy to new accounts, and the owner chose to keep v1 for the submission (`AWAIT_CONFIRMATION.md`, `DEPLOY_PLAN.md`).
 - **No dispute mechanism.** The `Disputed` state and the `DisputeOpened`/`DisputeResolved` activity kinds are reserved but never entered.
 - **No inactivity decay.** HIVE decay (`poke_decay`) is a documented TODO in `hive-token`.
 - **No Sputnik DAO treasury,** so the Social Money track is not claimed.
@@ -364,6 +369,7 @@ NEAR Intents and Chain Signatures are not used.
 - **Procurement is recommend-and-verify only.** Workers pick a model from NEAR AI Cloud's live catalog; nobody checks out with a vendor. Prices can change between the worker's read and the verifier's re-fetch; a change beyond the 1% tolerance fails the bounty. The catalog is AI models only.
 - **ETA is scored relative to the slowest bid.** The ETA term is `1 − eta / max_eta`, so the slowest bidder in a round always gets 0 on it. Posters can lower or zero the ETA weight per bounty with `selection_weights`.
 - **Hosted dashboard limits.** On a host without the local `data/` folder, the dashboard needs the committed export of the recorded run in `data/testnet-run/`.
+- **No Agent API spending policy.** An Agent API (agentsonintents.com) spending-limit check was evaluated but not integrated: that API is mainnet-only, needs an owner-signed agent and a key, and would not govern HiveFund's contract-escrow payouts. Spending is bounded by the on-chain function-call key allowances, escrow and the treasury spend cap. Future work; see [`agents/shared/AGENTAPI_NOTES.md`](agents/shared/AGENTAPI_NOTES.md).
 
 ## License
 

@@ -31,7 +31,7 @@ AI pre-screen (Claude Code / Codex) checks the repo runs and matches the README 
 
 Track-prompt guidance (nearai/near-hackathon-prompt-examples):
 - **Swarms:** one sub-account per agent so every on-chain action is attributable; write `RULES.md` before code; a **simulation mode with no LLM calls**; a live dashboard.
-- **Memecoins:** the mechanic is **enforced in the contract**, **no admin mint key**; judged on the mechanic, not the chart.
+- **Memecoins:** the mechanic is **enforced in the contract**: no account but the hub can call `mint` (as built, the owner keeps `set_minter`/`set_mint_rate` admin keys; see README Known limitations); judged on the mechanic, not the chart.
 - **Social:** build on Sputnik DAO / Trezu, don't rebuild a multisig.
 
 ## Research notes
@@ -196,7 +196,7 @@ Callback results: `testing_env!(ctx, test_vm_config(), RuntimeFeesConfig::test()
 State: `token: FungibleToken`, `metadata`, `owner: AccountId`, `minter: AccountId`.
 - `new(owner_id, minter_id)` `#[init]`. Metadata: spec `ft-1.0.0`, name "HiveFund Token", symbol "HIVE", decimals 18, icon = data-URI SVG.
 - `mint(account_id, amount: U128)`: panic `ERR_NOT_MINTER` unless predecessor == minter. If unregistered → `token.internal_register_account(&account_id)` (token pays storage from its own balance; fund with 2 NEAR at deploy). Then `internal_deposit`, emit `FtMint { owner_id, amount, memo: Some("bounty reward") }`.
-- `set_minter(minter_id)` owner-only (handover only; there is **no admin mint**).
+- `set_minter(minter_id)` owner-only (handover only; there is no mint method for the owner, but the owner can rotate the minter, which is an admin key; see README Known limitations).
 - View `get_minter()`.
 - **Decay (cut #2; only if core done by end of Day 2):** lazy and explicit. `last_active_ms: LookupMap<AccountId,u64>` updated on mint/transfer/receive. `poke_decay(account_id)` (anyone): if inactive > 7 days, burn `balance × min(days_inactive − 7, 50)%` (1%/day), emit `FtBurn`, reset timer. View `get_decay_preview(account_id) -> U128`. Avoids a lazy `ft_balance_of` that breaks the NEP-141 total_supply invariant.
 

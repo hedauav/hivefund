@@ -26,7 +26,8 @@ Worked examples at the deployed testnet budgets (bounties of 0.1 NEAR and 0.05 N
 | any | any | fail or score 0 | — | **0** (no mint on failure) |
 
 Why the supply is driven by outcomes:
-- **Only the hub can mint.** `hive-token.mint` panics with `ERR_NOT_MINTER` for any other caller, including the owner. Neither contract has an admin mint. `set_minter` (owner-only) can hand the minter role to a new hub, but it does not mint anything.
+- **Only the hub can mint.** `hive-token.mint` panics with `ERR_NOT_MINTER` for any other caller, including the owner. Neither contract has a mint method for anyone but the hub. The owner does retain admin keys: `set_minter` on `hive-token` can hand the minter role to another account, and `set_mint_rate` on the hub changes how much each verified result mints. Neither call mints anything by itself, but together they are a documented trust assumption.
+- **Admin keys: a one-way lock exists in code, but is NOT active on the deployed testnet contracts.** See "Admin keys and `lock_config`" below.
 - **Every mint is traced.** Each mint becomes a `SupplyPoint` holding `{bounty_id, recipient, bid_units, score, mint_rate, amount, total_minted_after}`, and the hub's `total_minted` must equal `ft_total_supply`. The dashboard checks this.
 - **Two inputs, both recorded.** The mint depends on the price the market agreed and the quality the verifier measured. The verifier's report is stored off-chain under the `check_results_hash` held on-chain, so anyone can re-hash it.
 - **Failed mints stay pending.** If the cross-contract mint fails, the payout stands, the `PendingMint` stays, a `MintFailed` entry is logged, and the owner can call `retry_mint`. A `mints_in_flight` guard prevents double mints.
@@ -36,6 +37,23 @@ Why the supply is driven by outcomes:
 - it burns 1% per day of inactivity beyond 7 days, capped at 50%, and emits `FtBurn`.
 
 It is lazy and explicit so that `ft_balance_of` stays a plain read and the NEP-141 `total_supply` invariant holds.
+
+### Admin keys and `lock_config`
+
+**Status: implemented and unit-tested in the contract source; NOT deployed. The live testnet contracts (`hub.hivefund-2026.testnet`, `hive.hivefund-2026.testnet`) run v0.1 code without this lock, so the owner admin keys above still apply to them.** Deploying it needs fresh `-v2` accounts; on 2026-11-14 the owner chose to keep v1 for the submission (see `AWAIT_CONFIRMATION.md`; procedure in `DEPLOY_PLAN.md`).
+
+What the code adds (both contracts):
+
+| Contract | `lock_config()` (owner-only, one-way) | After the lock | Not locked (and why) |
+|---|---|---|---|
+| `hive-token` | sets `config_locked = true`, logs `config locked: minter permanently fixed to <hub>` | `set_minter` panics `ERR_CONFIG_LOCKED`; the minter can never change again. `mint` by the hub keeps working; any other caller still gets `ERR_NOT_MINTER`. | — |
+| `bounty-hub` | sets `config_locked = true`, logs a `RoleChanged` activity entry `config locked: mint_rate permanently <rate>` | `set_mint_rate` panics `ERR_CONFIG_LOCKED`. The hub has no setter for `hive_token`, so the mint formula and mint target are fixed. | `set_coordinator`, `set_verifier`, `add_worker`, `remove_worker`: role management stays with the owner so a compromised agent can be replaced. None of them can create HIVE on their own: every mint still needs a verified pass and is bounded by the escrowed treasury (`docs/HIVE_SIMULATION.md`). A malicious owner could still appoint a colluding verifier; that remaining trust assumption is listed in the README limitations. |
+
+- Calling `lock_config` twice panics `ERR_CONFIG_LOCKED` (no silent no-op), and a non-owner gets `ERR_NOT_OWNER`.
+- View `is_config_locked() -> bool` on both contracts.
+- Tests: `contracts/hive-token/src/lib.rs` (5 new) and `contracts/bounty-hub/src/tests.rs` (5 new): owner can change config before the lock; `set_minter` / `set_mint_rate` panic after it; double lock and non-owner lock panic; the hub still mints after the lock; a non-hub mint still panics `ERR_NOT_MINTER`.
+- `scripts/lock-config.ts` calls the lock; it is dry-run by default, needs `--confirm` plus explicit `--hub` / `--token` accounts, and refuses to lock a token whose minter is not the given hub.
+- Order matters: lock the token only after its minter is the final hub.
 
 ## 2. Treasury math
 

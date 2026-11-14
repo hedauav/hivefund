@@ -85,7 +85,7 @@ When a bounty passes:
   HIVE      = bid_units × score / 100 × mint_rate    (HIVE has 18 decimals; default mint_rate = 10^16)
   ```
   For example, a 1 NEAR bid scored 100 mints 10 HIVE, and a 0.5 NEAR bid scored 80 mints 4 HIVE.
-- **Only the bounty-hub can mint HIVE.** There is no admin mint; HIVE comes into existence only through verified work. The supply history traces every mint to its bounty, bid and score.
+- **Only the bounty-hub can mint HIVE.** No other account can call `mint`; HIVE comes into existence only through verified work. The owner retains admin keys to rotate the minter (`set_minter`) and change `mint_rate` (`set_mint_rate`); this is a documented risk. A one-way `lock_config` that disables both is implemented in code but not deployed to the live testnet contracts. The supply history traces every mint to its bounty, bid and score.
 - If the mint call fails, the payout still stands. The mint is kept as pending and can be retried.
 
 ## 8. Failure, reopen, cancel [on-chain]

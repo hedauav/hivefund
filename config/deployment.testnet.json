@@ -192,5 +192,14 @@
     "verifyFail": "bounty 0 round 0: adaptive deliverable failed (LLM output truncated -> honest failed deliverable); bounty reopened",
     "verifyFailCancelRefund": "bounty 0 round 1: quality deliverable failed the acceptance test (11/37); second failure -> Cancelled, 0.1 NEAR refunded to treasury",
     "verifyPassAfterReopen": "npm run test:testnet: bounty 2 failed in round 0 (quality), reopened, adaptive won the rebid and passed at score 100"
+  },
+  "rekeyTxs": {
+    "coordinator": "DzcrzPtjj9Eq9fZjZfWypYaSX3VomLmyFG5XXE5JMEYf",
+    "verifier": "2qWf4DJiBSgWMfaWZ3M53xyDdjM3XCEPhF4k6jFz6EeM",
+    "cheap": "JAnKs1WVVNVXSoxGsxpso8cboPGUFnvDm3f95wnXU7g2",
+    "quality": "AtuXqmSxvN2mU6KTNsMmxYWA6evPcKTh6xfVR5J2hNuy",
+    "adaptive": "9BypHhbiBwaF6FatwoAUXLVwq9AWzregZT3KqTZbu6ur",
+    "forger": "6d7jooPSgZeLCaRa1oDugQ1PkuVwWkshaKSX6jioe4t",
+    "_note": "Function-call key rekeys (ADD_KEY) via scripts/topup.ts rekey; each confirmed successful on api-testnet.nearblocks.io on 2026-11-14 (signer = the agent account)."
   }
 }
