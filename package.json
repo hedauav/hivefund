@@ -19,6 +19,7 @@
     "procure": "tsx agents/coordinator/src/procure.ts",
     "agent": "tsx agents/coordinator/src/loop.ts",
     "sample": "tsx agents/coordinator/src/sample.ts",
+    "simulate:supply": "tsx scripts/simulate-supply.ts",
     "test": "npm -w tests test",
     "test:testnet": "npm -w tests run test:testnet",
     "typecheck:b": "tsc --noEmit -p agents/shared && tsc --noEmit -p agents/coordinator && tsc --noEmit -p tests",
