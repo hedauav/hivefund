@@ -241,7 +241,7 @@ ProcurementEvidence {                       // VerificationReport.procurement, h
 
 `CheckId = "schema" | "sections" | "test" | "catalog" | "delivery" | "rubric"`. For procurement specs the order is schema → sections → test (skipped) → catalog → delivery → rubric. `catalog` and `delivery` only appear on procurement reports.
 
-Procurement fixtures live in `bounties/procurement/*.json` and are posted only with `npm run demo -- --bounties procurement`.
+Procurement fixtures live in `bounties/procurement/*.json` and are posted only with `npm run demo -- --bounties procurement` (or `procurement,starter` to include the tier-1 glossary bounty in `bounties/starter/`). Any spec may set `selection_weights: {price, eta, reputation}`; the coordinator validates them and records them in the `SelectionRationale`, where each candidate also carries `reputation_source: "history" | "cold_start_prior"`.
 
 Other files in `data/`:
 - `index.jsonl`: one row per stored object, `{hash, kind, bounty_id, round, actor, ts}`.

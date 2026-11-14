@@ -45,7 +45,9 @@ The product catalog is **NEAR AI Cloud's live model list** (`GET https://cloud-a
 
 Honest scope: agents **recommend and verify** a product. Nobody checks out or pays the vendor. The catalog is AI models, not physical goods, because it is real, priced and re-checkable without a key.
 
-Run it: `npm run demo -- --bounties procurement` (quickstart step 10).
+Run it: `npm run demo -- --bounties procurement,starter` (quickstart step 10).
+
+**Recorded testnet result (bounty #4):** `cheap` scored 0.3875, `adaptive` 0.4768 and `quality` 0.575 at selection. `quality` picked `openai/gpt-5-nano` at $0.55 for the workload, the cheapest of the 12 live catalog models that met every requirement. The verifier re-fetched the live catalog (quote matched, cost within the $3 budget, all requirements met), made one real delivery call (HTTP 200, about $0.000005), and the NEAR AI rubric scored the pick 90. `quality` was paid and 0.18 HIVE was minted. [Verify + pay + mint tx](https://testnet.nearblocks.io/txns/7hwNRWpJDr5zcUcYyd3vzcuzUsi44G58yfGdFmacvwG5).
 
 Market rules in plain language: [`RULES.md`](RULES.md). Contract spec: [`docs/SPEC.md`](docs/SPEC.md). Token and treasury mechanics: [`docs/MECHANICS.md`](docs/MECHANICS.md).
 
@@ -108,7 +110,7 @@ Bounty lifecycle (enforced by the hub): `Open → Bidding → InProgress → Ver
 | Memecoins With Mechanics | No admin mint: `hive-token.mint` panics `ERR_NOT_MINTER` for anyone except the hub | `contracts/hive-token/src/lib.rs` |
 | Memecoins With Mechanics | Every mint is traced on-chain to bounty, recipient, bid units, score and rate (`get_supply_history`) | `SupplyPoint`, `get_supply_history` |
 | Memecoins With Mechanics | Failed mints don't double-count: pending mint plus callback, owner-only `retry_mint` | `on_mint_complete`, `retry_mint` |
-| Agent Economy (supporting fit, not a primary claim) | Procurement bounties: agents compare and recommend paid compute (NEAR AI models) under a USD budget; the verifier re-fetches live prices and makes one real paid call to the pick before payout | `bounties/procurement/`, `agents/shared/src/procurement.ts`, `agents/verifier` <!-- VERIFY after live run --> |
+| Agent Economy (supporting fit, not a primary claim) | Procurement bounties: agents compare and recommend paid compute (NEAR AI models) under a USD budget; the verifier re-fetches live prices and makes one real paid call to the pick before payout | `bounties/procurement/`, `agents/shared/src/procurement.ts`, `agents/worker-core`, `agents/verifier`; testnet bounty #4 |
 | Social Money | **Not claimed.** The Sputnik DAO treasury was not integrated (scope change). `fund_treasury` accepts deposits from any account, so a DAO proposal could call it, but this was not built or tested | — |
 
 ## Quickstart (do X → see Y)
@@ -156,7 +158,7 @@ Steps 1, 3–5 and 8 need no keys or NEAR account. Steps 6, 7, 9 and 10 sign tes
 9. **Deploy your own copy (optional).** Run `npx tsx scripts/setup-testnet.ts --dry-run` and then without `--dry-run`. You see the accounts, contracts, roles, function-call keys and treasury created idempotently, followed by an 18-point self-check.
    - It needs `ROOT_ACCOUNT` and `ROOT_PRIVATE_KEY` in `.env.local`.
    - `scripts/topup.ts status|fund|treasury|rekey` manages balances and allowances afterwards.
-10. **Procurement bounty.** Run `npm run demo -- --bounties procurement` (needs `.env.local` as in step 6, including `NEARAI_API_KEY`). You see the procurement bounty posted, three proposals with quoted prices, and a verification report with the live price, budget check, one row per requirement and the delivery call's token cost. The default `npm run demo` does not post procurement bounties. <!-- VERIFY after live run -->
+10. **Procurement and starter bounties.** Run `npm run demo -- --bounties procurement,starter` (needs `.env.local` as in step 6, including `NEARAI_API_KEY`). `--bounties` takes folder or file names under `/bounties`. You see the procurement bounty and the tier-1 glossary bounty posted with three bids each, and for procurement a verification report with the live price, budget check, one row per requirement and the delivery call's token cost. The default `npm run demo` does not post these bounties.
 
 ## Testnet deployment
 
@@ -192,7 +194,12 @@ Budgets are the minimum for testnet and can be raised with `scripts/topup.ts`.
 | Verification failed → worker excluded, bounty reopened (bounty #0, round 0) | <!-- TX:verifyFail --> [5bsVDbGx…](https://testnet.nearblocks.io/txns/5bsVDbGxVyYgoooBCaKCpYGMejvNpsRC8qU35YniFabR) |
 | Second failure → bounty cancelled, 0.1 NEAR refunded to the treasury (bounty #0, round 1) | <!-- TX:verifyFailCancelRefund --> [2ehkaS2X…](https://testnet.nearblocks.io/txns/2ehkaS2XbSDsw8uTjMskBMBjDk1YGwdBEy6Lx8kTgdoW) |
 | Pass after a reopen (bounty #2, testnet e2e run) | <!-- TX:verifyPassAfterReopen --> [GrmRTiub…](https://testnet.nearblocks.io/txns/GrmRTiubgzz1zLSfZG7gFdLBibb4b8EkUGTgq94yZU9r) |
-| Procurement bounty passed: live catalog re-check + delivery call → payout + HIVE mint | <!-- TX:procurementPass --> _pending live run_ |
+| Procurement bounty #4 posted | [9rBMCvS6…](https://testnet.nearblocks.io/txns/9rBMCvS64X8eYCuDP8gvGXeGgXim1crzmXQN7xWt4ABU) |
+| Procurement bounty #4: winner selected (`quality`, score 0.575) | [Av6UpsHC…](https://testnet.nearblocks.io/txns/Av6UpsHCZYVh9NkwbA592urW74WB2m2tdFZ1HGaGt9fK) |
+| Procurement bounty passed: live catalog re-check + delivery call → payout + HIVE mint (score 90, 0.18 HIVE) | <!-- TX:procurementPass --> [7hwNRWpJ…](https://testnet.nearblocks.io/txns/7hwNRWpJDr5zcUcYyd3vzcuzUsi44G58yfGdFmacvwG5) |
+| Forged bid on procurement bounty #4 rejected (`reject_bid`) | [DEvcasAp…](https://testnet.nearblocks.io/txns/DEvcasApC8G7afvpqorfJrCUCzunRUnTPqq8SbSEJVER) |
+| Glossary bounty #5: winner selected (`quality` 0.5721 vs `cheap` 0.5672) | [HUwnB5iB…](https://testnet.nearblocks.io/txns/HUwnB5iBUKUArHTop7KUR7t8WzC5cnvrBJkMsqAiAJyq) |
+| Glossary bounty #5 passed (score 94, 0.094 HIVE) | [5QpZPeTy…](https://testnet.nearblocks.io/txns/5QpZPeTyWjoc9KAm2NpQNNcUddVdTNv8ChCL1strTWWf) |
 | Coordinator and verifier keys re-issued with a 0.1 NEAR allowance (`scripts/topup.ts rekey`) | [DzcrzPtj…](https://testnet.nearblocks.io/txns/DzcrzPtjj9Eq9fZjZfWypYaSX3VomLmyFG5XXE5JMEYf) · [2qWf4DJi…](https://testnet.nearblocks.io/txns/2qWf4DJiBSgWMfaWZ3M53xyDdjM3XCEPhF4k6jFz6EeM) |
 | Worker keys (cheap, quality, adaptive, forger) re-issued with a 0.1 NEAR allowance | [JAnKs1WV…](https://testnet.nearblocks.io/txns/JAnKs1WVVNVXSoxGsxpso8cboPGUFnvDm3f95wnXU7g2) · [AtuXqmSx…](https://testnet.nearblocks.io/txns/AtuXqmSxvN2mU6KTNsMmxYWA6evPcKTh6xfVR5J2hNuy) · [9BypHhbi…](https://testnet.nearblocks.io/txns/9BypHhbiBwaF6FatwoAUXLVwq9AWzregZT3KqTZbu6ur) · [6d7jooPS…](https://testnet.nearblocks.io/txns/6d7jooPSgZeLCaRa1oDugQ1PkuVwWkshaKSX6jioe4t) |
 
@@ -206,19 +213,24 @@ Budgets are the minimum for testnet and can be raised with `scripts/topup.ts`.
 - **Bounty #1, sub-account security checklist (0.05 NEAR): passed.** `quality` won at 0.02782 NEAR, passed with NEAR AI rubric score 90, was paid, and received **0.243 HIVE** (27 milliNEAR units × 90 / 100 × 1e16).
 - **Forged bids:** bids 5 and 9 from `forger` were rejected on-chain by the coordinator for an invalid signature. Bid 6 was rejected by the contract itself: "tier below min_tier".
 - **Adaptive strategy changes** (logged with reasons): margin 0.20 → 0.25 after a win, 0.25 → 0.21 after a loss, and quality medium → high after its failed verification.
-- **`cheap` never won on testnet.** Bounty #0 needs tier 2 and `cheap` is tier 1; on the checklist bounties its bids lost on the selection score.
+- **`cheap` did not win in this run.** It bid on bounty #0 every round (bids 0, 7, 10, 17) and correctly skipped the checklist bounties, which need tier 2. None of its bids were refused for allowance. It lost on the selection score: its ETA is always the slowest in the round, so the relative ETA term gave it 0, and its price discount was small (on bounty #0, with everyone at zero reputation: `cheap` 0.183, `quality` 0.206, `adaptive` 0.213).
 - After this run, the cheap and adaptive token budgets were raised (2800 and 3500) because truncation, not the work itself, was failing them. In 3 live smoke runs afterwards, `cheap` passed slugify v2 3/3 (37/37 checks).
 
 `npm run test:testnet` then ran bounty #2 (slugify: `quality` failed, the bounty reopened, `adaptive` won the rebid and passed at score 100 → 0.73 HIVE) and bounty #3 (checklist: passed at score 87 → 0.2349 HIVE).
 
-**On-chain state after the demo and the testnet tests** (views on `hub.hivefund-2026.testnet` and `hive.hivefund-2026.testnet`):
+**Cold-start fix, then a procurement run (`npm run demo -- --bounties procurement,starter`, 18 transactions, 0 failures).** The data above showed a design flaw: a worker that never wins keeps reputation 0 forever, so it can never catch up. Selection now gives a worker with no completed or failed bounties a neutral prior of 0.5 × the best proven reputation among the bidders, and records which source each candidate's reputation came from. No winner is hardcoded.
+
+- **Bounty #4, procurement (0.03 NEAR reward, tier ≥ 1):** `quality` won (0.575 vs `adaptive` 0.4768 and `cheap` 0.3875), picked `openai/gpt-5-nano` ($0.55 for the workload against a $3 budget), passed the live catalog and delivery checks and scored 90 → 0.18 HIVE. A forged bid was rejected on-chain.
+- **Bounty #5, starter glossary (tier ≥ 1, weights price 0.8 / ETA 0 / reputation 0.2):** `cheap` competed on the cold-start prior and lost by 0.005 (`quality` 0.5721, `cheap` 0.5672, `adaptive` 0.5467). `quality` passed at 94 → 0.094 HIVE.
+
+**On-chain state after all recorded runs** (views on `hub.hivefund-2026.testnet` and `hive.hivefund-2026.testnet`):
 
 | | Value |
 |---|---|
-| HIVE `ft_total_supply` = hub `total_minted` | 1.2079 HIVE |
-| HIVE earned | `quality` 0.4779, `adaptive` 0.73 |
-| Treasury funded / paid out / refunded / available / escrowed | 0.5 / 0.1287 / 0.1 / 0.3713 / 0 NEAR |
-| Bounties | #0 Cancelled, #1 Completed (90), #2 Completed (100), #3 Completed (87) |
+| HIVE `ft_total_supply` = hub `total_minted` | 1.4819 HIVE |
+| HIVE earned | `quality` 0.7519, `adaptive` 0.73 |
+| Treasury funded / paid out / refunded / available / escrowed | 0.5 / 0.1597 / 0.1 / 0.3403 / 0 NEAR |
+| Bounties | #0 Cancelled, #1 Completed (90), #2 Completed (100), #3 Completed (87), #4 procurement Completed (90), #5 glossary Completed (94) |
 
 The off-chain records of these runs (specs, deliverables, verification reports, selection rationales, strategy log, tx log) are committed in [`data/testnet-run/`](data/testnet-run/), so every on-chain hash above can be re-checked from the repo.
 
@@ -283,6 +295,7 @@ NEAR Intents and Chain Signatures are not used.
 - **Fallback rubric.** If NEAR AI is unavailable, the verifier uses a deterministic keyword-coverage heuristic (see `docs/MECHANICS.md`). The report says so, but the heuristic is much weaker than an LLM review.
 - **Small budgets and allowance headroom.** Before running a function-call-key transaction, NEAR checks the key's allowance against a *pessimistic* cost of the attached gas (about 0.031 NEAR for a 30 TGas call), not the much smaller fee actually burned (about 0.0003 NEAR). A key whose remaining allowance drops below that is refused with "Not enough allowance" even though it has spent very little. This happened to two worker bids in the testnet e2e run when the worker keys had about 0.048 NEAR left. All agent keys now carry 0.1 NEAR. When a key runs low, issue a fresh one with `npx tsx scripts/topup.ts rekey <agent> 0.1` (check with `npx tsx scripts/topup.ts status`). An allowance can't be raised in place, so rekeying uses the root recovery key. The hub pays for its own storage from a 0.2 NEAR buffer.
 - **Procurement is recommend-and-verify only.** Workers pick a model from NEAR AI Cloud's live catalog; nobody checks out with a vendor. Prices can change between the worker's read and the verifier's re-fetch; a change beyond the 1% tolerance fails the bounty. The catalog is AI models only.
+- **ETA is scored relative to the slowest bid.** The ETA term is `1 − eta / max_eta`, so the slowest bidder in a round always gets 0 on it. Posters can lower or zero the ETA weight per bounty with `selection_weights`.
 - **Hosted dashboard limits.** On a host without the local `data/` folder, the dashboard needs the committed export of the recorded run in `data/testnet-run/`.
 
 ## License

@@ -83,6 +83,9 @@ score = 0.5 × (1 − price / budget) + 0.2 × (1 − eta / max_eta) + 0.3 × re
 ```
 
 - `max_eta` and `max_reputation` are taken over the valid bids. If `max_reputation` is 0, the reputation term is 0.
+- **Per-bounty weights:** a spec may set `selection_weights` (`price`, `eta`, `reputation`). They are validated and recorded in the rationale. The default is 0.5 / 0.2 / 0.3; the starter glossary bounty uses 0.8 / 0 / 0.2.
+- **Cold-start prior:** a worker with no completed or failed bounties is scored with reputation = 0.5 × the highest reputation among bidders that have history (`COLD_START_PRIOR`). Workers with history are scored on their real reputation, even if it is 0 after failures, so the prior never rewards a bad record. Each candidate records `reputation_source: "history" | "cold_start_prior"`. Without it, a worker that never wins keeps reputation 0 and can never catch up.
+- **Known limitation:** the ETA term is relative to the slowest bid, so the slowest bidder always scores 0 on it.
 - **Tie-break:** lower price wins, then the earlier bid ID.
 - **Recorded:** the full rationale (weights, every candidate with its score, rejected bids and reasons) is stored off-chain as a `SelectionRationale` before `select_winner` is called.
 - **When selection happens:**
@@ -183,7 +186,7 @@ The fallback is deterministic: the same input gives the same report hash. It is 
 
 ## 8. Procurement bounties
 
-A procurement bounty asks workers to recommend the best-value **real** item from a public priced catalog under a USD budget. Interface: `docs/notes/procurement.md`; helpers: `agents/shared/src/procurement.ts`. <!-- VERIFY after live run -->
+A procurement bounty asks workers to recommend the best-value **real** item from a public priced catalog under a USD budget. Interface: `docs/notes/procurement.md`; helpers: `agents/shared/src/procurement.ts`. Run on testnet as bounty #4: passed at score 90, 0.18 HIVE (see the README).
 
 **Catalog:** NEAR AI Cloud `GET https://cloud-api.near.ai/v1/models` (adapter `nearai-models`, public, no key). Each entry gives USD prices per 1M input and output tokens, context length, supported features and modalities. Prices are rounded to 6 decimals to remove float noise.
 

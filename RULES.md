@@ -58,8 +58,10 @@ Each role is a separate NEAR account. Every agent has its own sub-account that h
 
 1. The coordinator scores every valid bid:
    `0.5·(1 − price/budget) + 0.2·(1 − eta/max_eta) + 0.3·reputation/max_reputation`
-2. Ties go to the lower price.
-3. The coordinator stores the full scoring rationale off-chain and selects the winner on-chain.
+2. A bounty may set its own weights (`selection_weights`) instead of 0.5 / 0.2 / 0.3.
+3. A new worker (no completed or failed bounties yet) gets a neutral reputation: half of the best proven reputation among the bidders. Workers with a track record are scored on their real reputation.
+4. Ties go to the lower price.
+5. The coordinator stores the full scoring rationale off-chain and selects the winner on-chain.
 
 ## 6. Verification [off-chain checks, on-chain verdict]
 
