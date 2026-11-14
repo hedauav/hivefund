@@ -140,8 +140,8 @@ export function Mono({ children, title }: PropsWithChildren<{ title?: string }>)
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
     <div className="px-4 py-3">
-      <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</div>
-      <div className="mt-0.5 font-display text-2xl font-bold tracking-tight">{value}</div>
+      <div className="pxlabel text-muted">{label}</div>
+      <div className="mt-1 font-display text-[2rem] leading-none">{value}</div>
       {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
     </div>
   );

@@ -6,6 +6,9 @@ import { humanizeDetail } from "@/lib/format";
 export type Role = "cheap" | "quality" | "adaptive" | "forger" | "coordinator" | "verifier";
 export const ROLES: Role[] = ["coordinator", "verifier", "cheap", "quality", "adaptive", "forger"];
 
+/** Where an agent is standing in the town (the arena maps these to its own coordinates). */
+export type Station = "home" | "board" | "hall" | "lab" | "vault" | "mint";
+
 export interface Pt {
   x: number; // % of stage width
   y: number; // % of stage height (agent feet)
@@ -75,6 +78,7 @@ export interface Scene {
   cards: Record<number, Card>;
   bids: Record<number, BidBlock>;
   pos: Record<Role, Pt & { walk: boolean; carry: boolean }>;
+  loc: Record<Role, Station>;
   fx: Fx[];
   bubble: { role: Role; text: string } | null;
   caption: string;
@@ -85,8 +89,12 @@ export interface Scene {
 export function emptyScene(): Scene {
   const pos = {} as Scene["pos"];
   for (const r of ROLES) pos[r] = { ...HOME[r], walk: false, carry: false };
-  return { cards: {}, bids: {}, pos, fx: [], bubble: null, caption: "", last: null, n: 0 };
+  return { cards: {}, bids: {}, pos, loc: homes(), fx: [], bubble: null, caption: "", last: null, n: 0 };
 }
+
+const homes = () => Object.fromEntries(ROLES.map((r) => [r, "home"])) as Record<Role, Station>;
+const STATION_OF = (p: Pt): Station =>
+  p === BENCH ? "lab" : p === CHEST ? "vault" : p === MINT ? "mint" : p === HOME.verifier ? "lab" : p === HOME.coordinator ? "hall" : "board";
 
 export function roleOf(account: string | null | undefined): Role | null {
   const head = (account ?? "").split(".")[0] as Role;
@@ -141,11 +149,12 @@ export function durationOf(ev: TimelineEvent): number {
 
 /** Apply one event. Agents not involved in it walk home. */
 export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string>, proc: ArenaProc = NO_PROC): Scene {
-  const s: Scene = { ...prev, cards: { ...prev.cards }, bids: { ...prev.bids }, pos: { ...prev.pos }, fx: [], bubble: null, last: ev, n: prev.n + 1 };
+  const s: Scene = { ...prev, cards: { ...prev.cards }, bids: { ...prev.bids }, pos: { ...prev.pos }, loc: { ...prev.loc }, fx: [], bubble: null, last: ev, n: prev.n + 1 };
   const moved = new Set<Role>();
   const go = (r: Role | null, p: Pt, carry = false) => {
     if (!r) return;
     moved.add(r);
+    s.loc[r] = STATION_OF(p);
     const cur = s.pos[r];
     s.pos[r] = { ...p, walk: cur.x !== p.x || cur.y !== p.y, carry };
   };
@@ -256,6 +265,7 @@ export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string
     const cur = s.pos[r];
     const h = HOME[r];
     s.pos[r] = { ...h, walk: cur.x !== h.x || cur.y !== h.y, carry: false };
+    s.loc[r] = "home";
   }
   return s;
 }
@@ -264,7 +274,7 @@ export function apply(prev: Scene, ev: TimelineEvent, titles: Map<number, string
 export function settle(s: Scene): Scene {
   const pos = {} as Scene["pos"];
   for (const r of ROLES) pos[r] = { ...HOME[r], walk: false, carry: false };
-  return { ...s, pos, fx: [], bubble: null };
+  return { ...s, pos, loc: homes(), fx: [], bubble: null };
 }
 
 const pct = (m: number) => `${Math.round(m * 100)}%`;

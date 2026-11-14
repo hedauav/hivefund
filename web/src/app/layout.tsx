@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, IBM_Plex_Mono, Pixelify_Sans, Public_Sans } from "next/font/google";
+import { Atkinson_Hyperlegible, IBM_Plex_Mono, Jersey_10, Silkscreen } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Providers } from "@/providers";
@@ -7,10 +7,10 @@ import { themeBootScript } from "@/providers/theme-provider";
 import { Header } from "@/components/header";
 import { ModeBanner } from "@/components/mode-banner";
 
-const ui = Public_Sans({ subsets: ["latin"], variable: "--font-ui" });
-const head = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-head" });
+const ui = Atkinson_Hyperlegible({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-ui" });
+const head = Jersey_10({ subsets: ["latin"], weight: "400", variable: "--font-head" });
 const code = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-code" });
-const px = Pixelify_Sans({ subsets: ["latin"], variable: "--font-px" });
+const px = Silkscreen({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-px" });
 
 export const metadata: Metadata = {
   title: "HiveFund",

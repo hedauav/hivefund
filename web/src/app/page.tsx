@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useHub } from "@/providers/data-provider";
-import { SwarmArena } from "@/components/arena/arena";
+import { Town } from "@/components/town/town";
+import { Drawer } from "@/components/town/drawer";
+import type { BuildingId } from "@/components/town/world";
 import { StatsRow } from "@/components/stats-row";
 import { BountyBoard } from "@/components/bounty-board";
 import { BidBoard } from "@/components/bid-board";
@@ -17,6 +19,12 @@ import { LoadState } from "@/components/load-state";
 export default function Dashboard() {
   const { snapshot } = useHub();
   const [picked, setPicked] = useState<number | null>(null);
+  const [drawer, setDrawer] = useState<BuildingId | null>(null);
+  const open = useCallback((id: BuildingId, bounty?: number) => {
+    if (bounty != null) setPicked(bounty);
+    setDrawer(id);
+  }, []);
+  const close = useCallback(() => setDrawer(null), []);
 
   if (!snapshot) return <LoadState />;
 
@@ -29,35 +37,41 @@ export default function Dashboard() {
     byRecent[0];
 
   return (
-    <div className="space-y-8">
-      <SwarmArena />
-      <StatsRow />
+    <>
+      <div className="bleed">
+        <Town onOpen={open} />
+      </div>
+      <Drawer open={drawer} bounty={featured} onPick={setPicked} onClose={close} />
 
-      <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
-        <div className={featured ? "lg:col-span-7" : "lg:col-span-12"}>
-          <BountyBoard selected={featured?.id ?? null} onSelect={setPicked} />
+      <div className="mt-10 space-y-8">
+        <div className="ledger-intro">
+          <h2 className="ledger-heading">The town ledger</h2>
+          <p>Everything the town acts out, as plain tables. Contract state is read live from NEAR testnet; reports and rationales are re-hashed in your browser.</p>
         </div>
-        {featured && (
-          <div className="lg:col-span-5">
-            <BidBoard bounty={featured} compact />
+        <StatsRow />
+        <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
+          <div className={featured ? "lg:col-span-7" : "lg:col-span-12"}>
+            <BountyBoard selected={featured?.id ?? null} onSelect={setPicked} />
           </div>
-        )}
-      </div>
-
-      {featured && <VerificationPanel bounty={featured} />}
-      <HivePanel />
-      <WorkerPanel />
-
-      <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
-        <div className="lg:col-span-5">
-          <TreasuryPanel />
+          {featured && (
+            <div className="lg:col-span-5">
+              <BidBoard bounty={featured} compact />
+            </div>
+          )}
         </div>
-        <div className="lg:col-span-7">
-          <ReputationTable />
+        {featured && <VerificationPanel bounty={featured} />}
+        <HivePanel />
+        <WorkerPanel />
+        <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
+          <div className="lg:col-span-5">
+            <TreasuryPanel />
+          </div>
+          <div className="lg:col-span-7">
+            <ReputationTable />
+          </div>
         </div>
+        <ActivityFeed />
       </div>
-
-      <ActivityFeed />
-    </div>
+    </>
   );
 }
