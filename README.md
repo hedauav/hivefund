@@ -292,7 +292,7 @@ NEAR Intents and Chain Signatures are not used.
 ## Team
 
 - Team: TODO(human)
-- Payout NEAR account (mainnet): TODO(human). Never filled in by an agent.
+- Payout NEAR account (mainnet): `anishh.near`
 
 ## Known limitations
 
