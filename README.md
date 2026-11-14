@@ -237,7 +237,8 @@ The off-chain records of these runs (specs, deliverables, verification reports, 
 ## Demo
 
 - Video: <!-- DEMO:video --> TODO(human): add the demo video link.
-- Hosted dashboard: <!-- DEMO:url --> TODO(human): add the URL if hosted; otherwise follow Quickstart step 8.
+- Repository: https://github.com/hedauav/hivefund
+- Hosted dashboard: <!-- DEMO:url --> https://hivefund-near.vercel.app (live mode on `hub.hivefund-2026.testnet`, with the recorded testnet run). To run it locally, follow Quickstart step 8.
 - Demo post on X: <!-- DEMO:x --> TODO(human). A draft is in [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
 ## NEAR features used
