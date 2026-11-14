@@ -117,7 +117,7 @@ export async function llmRubric(spec: BountySpec, d: Deliverable, llm: LlmClient
         ].join("\n"),
       },
     ],
-    { schema: { name: "rubric_scores", schema, strict: true }, maxTokens: 800, temperature: 0 },
+    { schema: { name: "rubric_scores", schema, strict: true }, maxTokens: 1500, temperature: 0 },
   );
   const arr = (raw as { scores?: unknown })?.scores;
   if (!Array.isArray(arr)) throw new Error("rubric response has no scores array");
@@ -151,7 +151,17 @@ function withOverrides(spec: BountySpec, r: RubricResult, o?: RubricExtras["fall
 export async function scoreRubric(spec: BountySpec, d: Deliverable, llm: LlmClient | null, extras: RubricExtras = {}): Promise<RubricResult> {
   if (!llm) return withOverrides(spec, fallbackRubric(spec, d), extras.fallbackOverrides);
   try {
-    return await llmRubric(spec, d, llm, extras.context);
+    // Up to 3 attempts: GLM-flash occasionally returns empty or truncated JSON; a transient glitch should not
+    // silently downgrade the verdict to the fallback. A persistent failure still falls back and is recorded.
+    let last: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await llmRubric(spec, d, llm, extras.context);
+      } catch (e) {
+        last = e;
+      }
+    }
+    throw last;
   } catch (e) {
     return { ...withOverrides(spec, fallbackRubric(spec, d), extras.fallbackOverrides), llm_error: String((e as Error).message).slice(0, 200) };
   }
